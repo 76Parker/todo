@@ -1,0 +1,62 @@
+package config
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+
+	"github.com/go-playground/validator"
+)
+
+const allowedPortsTag = "allowed_ports"
+
+type AllowedPortError struct {
+	Field string
+	Value int
+}
+
+func (e AllowedPortError) Error() string {
+	return fmt.Sprintf("field %s: port %d is out of allowed range (1023-65535)", e.Field, e.Value)
+}
+
+type PlaygroundValidator struct {
+	v *validator.Validate
+}
+
+func NewValidator() (Validator, error) {
+	v := &PlaygroundValidator{}
+	v.v = validator.New()
+	if err := v.addPortRangeValidation(); err != nil {
+		return nil, err
+	}
+	return v, nil
+}
+
+func (v *PlaygroundValidator) Validate(cfg *Config) error {
+	if err := v.v.Struct(cfg); err != nil {
+		if ve, ok := errors.AsType[validator.ValidationErrors](err); ok {
+			for _, e := range ve {
+				if e.Tag() == allowedPortsTag {
+					f := e.Field()
+					v, _ := strconv.Atoi(e.Value().(string))
+					return AllowedPortError{f, v}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// addPortRangeValidation валидирует поля с тегом allowed_ports на разрешенный диапазон портов
+func (v *PlaygroundValidator) addPortRangeValidation() error {
+	if err := v.v.RegisterValidation(allowedPortsTag, func(fl validator.FieldLevel) bool {
+		port := fl.Field().Int()
+		if port < 1023 || port > 65535 {
+			return false
+		}
+		return true
+	}); err != nil {
+		return err
+	}
+	return nil
+}
