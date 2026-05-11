@@ -10,12 +10,12 @@ import (
 
 const allowedPortsTag = "allowed_ports"
 
-type AllowedPortError struct {
+type AllowedPortsError struct {
 	Field string
 	Value int
 }
 
-func (e AllowedPortError) Error() string {
+func (e AllowedPortsError) Error() string {
 	return fmt.Sprintf("field %s: port %d is out of allowed range (1023-65535)", e.Field, e.Value)
 }
 
@@ -39,7 +39,7 @@ func (v *PlaygroundValidator) Validate(cfg *Config) error {
 				if e.Tag() == allowedPortsTag {
 					f := e.Field()
 					v, _ := strconv.Atoi(e.Value().(string))
-					return AllowedPortError{f, v}
+					return AllowedPortsError{f, v}
 				}
 			}
 		}
