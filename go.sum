@@ -1,3 +1,5 @@
+github.com/76Parker/golib v0.0.0-20260511220533-3219c6afcd8a h1:VtTxMe35GzkCpMpS1diijN1Fkplwv/TcPfzzrtYk1lI=
+github.com/76Parker/golib v0.0.0-20260511220533-3219c6afcd8a/go.mod h1:eeoD2gPvFqQXAQTUNghb0NdMJPgM7Xh0uMSeRQPrZX8=
 github.com/caarlos0/env/v11 v11.4.1 h1:fYwH0sWEsBSMPG7t4e/PEfTFzrWrpjyygXyUnWiSwEw=
 github.com/caarlos0/env/v11 v11.4.1/go.mod h1:qupehSf/Y0TUTsxKywqRt/vJjN5nz6vauiYEUUr8P4U=
 github.com/go-playground/locales v0.14.1 h1:EWaQ/wswjilfKLTECiXz7Rh+3BjFhfDFKv/oXslEjJA=
