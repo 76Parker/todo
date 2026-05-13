@@ -3,11 +3,11 @@ module todo
 go 1.26.2
 
 require (
-	github.com/76Parker/golib v0.0.0-20260511220533-3219c6afcd8a
+	github.com/76Parker/golib v0.0.0-20260513231034-3a8d0c81e961
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/rs/xid v1.6.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.11.1
 )
 
 require (

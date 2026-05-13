@@ -2,12 +2,8 @@ package api
 
 import (
 	"net/http"
-
-	"github.com/76Parker/golib/loglib"
 )
 
-type TasksHandler struct {
-	log loglib.Logger
-}
+type TaskHandler struct{}
 
-func (t *TasksHandler) Create(w http.ResponseWriter, r *http.Request) {}
+func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {}

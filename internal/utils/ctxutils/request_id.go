@@ -2,12 +2,12 @@ package ctxutils
 
 import "context"
 
-const requestID = "request_id"
+type ctxKeyRequestID struct{}
 
 func RequestID(ctx context.Context) string {
-	return ctx.Value(requestID).(string)
+	return ctx.Value(ctxKeyRequestID{}).(string)
 }
 
 func SetRequestID(ctx context.Context, reqID string) context.Context {
-	return context.WithValue(ctx, requestID, reqID)
+	return context.WithValue(ctx, ctxKeyRequestID{}, reqID)
 }
