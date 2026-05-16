@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"todo/internal/utils/ctxutils"
 
+	"github.com/76Parker/golib/ctxlib"
 	"github.com/76Parker/golib/loglib"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,8 +15,8 @@ func TestLog_RequestID_Auto(t *testing.T) {
 	var logger loglib.Logger
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotRequestID = ctxutils.RequestID(r.Context())
-		logger = ctxutils.GetLoggerFromContext(r.Context())
+		gotRequestID = ctxlib.RequestID(r.Context())
+		logger = ctxlib.GetLoggerFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -39,8 +39,8 @@ func TestLog_RequestID_Header(t *testing.T) {
 	testRequestID := "test-request-id"
 
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gotRequestID = ctxutils.RequestID(r.Context())
-		logger = ctxutils.GetLoggerFromContext(r.Context())
+		gotRequestID = ctxlib.RequestID(r.Context())
+		logger = ctxlib.GetLoggerFromContext(r.Context())
 		w.WriteHeader(http.StatusOK)
 	})
 	req := httptest.NewRequest(http.MethodGet, "/", nil)

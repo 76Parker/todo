@@ -2,11 +2,12 @@ package validator
 
 import (
 	"errors"
-	"todo/internal/api/apierr"
+	"fmt"
+	"strings"
 	"todo/internal/entities/dto"
 
-	"github.com/go-playground/validator"
-	"github.com/go-playground/validator/non-standard/validators"
+	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator/v10/non-standard/validators"
 )
 
 var (
@@ -14,42 +15,37 @@ var (
 	minTag      = "min"
 	maxTag      = "max"
 	notBlankTag = "notblank"
-
-	errRequired = errors.New("required field is missing")
-	errMin      = errors.New("field is too small")
-	errMax      = errors.New("field is too large")
-	errBlank    = errors.New("field is blank")
 )
 
 type DTO struct {
 	v *validator.Validate
 }
 
-func NewDtoValidator() (*DTO, error) {
+func MustDtoValidator() *DTO {
 	v := validator.New()
 	if err := v.RegisterValidation(notBlankTag, validators.NotBlank); err != nil {
-		return nil, err
+		panic(fmt.Sprintf("panic in validator.MustDtoValidator: %s", err.Error()))
 	}
 	return &DTO{
 		v: v,
-	}, nil
+	}
 }
 func (v *DTO) Validate(dto dto.DTO) error {
-	dtoName := dto.Type()
 	if err := v.v.Struct(dto); err != nil {
 		if errs, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			for _, e := range errs {
+				field := strings.ToLower(e.Field())
 				switch e.Tag() {
 				case requiredTag:
-					return apierr.NewValidatorErr(errRequired, e.Field(), dtoName)
+					return fmt.Errorf("%s is required", field)
 				case minTag:
-					return apierr.NewValidatorErr(errMin, e.Field(), dtoName)
+					return fmt.Errorf("%s is too small", field)
 				case maxTag:
-					return apierr.NewValidatorErr(errMax, e.Field(), dtoName)
+					return fmt.Errorf("%s is too large", field)
 				case notBlankTag:
-					return apierr.NewValidatorErr(errBlank, e.Field(), dtoName)
+					return fmt.Errorf("%s is blank", field)
 				default:
-					return apierr.NewValidatorErr(err, e.Field(), dtoName)
+					return fmt.Errorf("%s", field)
 				}
 			}
 		}

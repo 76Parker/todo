@@ -1,7 +1,12 @@
 package config
 
 import (
-	"github.com/caarlos0/env/v11"
+	"os"
+
+	"github.com/76Parker/golib/httplib"
+	"github.com/76Parker/golib/loglib"
+	"github.com/76Parker/golib/pglib"
+	"gopkg.in/yaml.v3"
 )
 
 type Validator interface {
@@ -9,27 +14,24 @@ type Validator interface {
 }
 
 type Config struct {
-	App      App      `envPrefix:"TODO"`
-	Postgres Postgres `envPrefix:"POSTGRES"`
+	Logger   loglib.SlogConfig `yaml:"logger" validate:"required"`
+	Postgres pglib.Config      `yaml:"postgres" validate:"required"`
+	Http     httplib.Config    `yaml:"http" validate:"required"`
 }
 
-type App struct {
-	Host string `env:"HOST" envDefault:"localhost" validate:"required"`
-	Port int    `env:"PORT" envDefault:"8080" validate:"required,allowed_ports"`
-}
+func Load(configPath string) (Config, error) {
+	var cfg Config
 
-type Postgres struct {
-	Host string `env:"HOST" envDefault:"localhost" validate:"required"`
-	Port int    `env:"PORT" envDefault:"5432" validate:"required,allowed_ports"`
-}
-
-func Load() (*Config, error) {
-	cfg := &Config{}
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return cfg, err
 	}
-	if err := validateConfig(cfg); err != nil {
-		return nil, err
+
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return cfg, err
+	}
+	if err := validateConfig(&cfg); err != nil {
+		return cfg, err
 	}
 	return cfg, nil
 }
