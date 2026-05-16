@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: Todo API
+  version: 1.0.0
+  description: API для создания задач.
+servers:
+  - url: /
+tags:
+  - name: Tasks
+    description: Операции с задачами
+paths:
+  /v1/tasks:
+    post:
+      tags:
+        - Tasks
+      summary: Создать задачу
+      description: Создаёт новую задачу и возвращает сохранённую сущность.
+      operationId: createTask
+      parameters:
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTask'
+            examples:
+              minimal:
+                summary: Минимальный запрос
+                value:
+                  title: Buy milk
+                  status: open
+              full:
+                summary: Полный запрос
+                value:
+                  title: Prepare sprint board
+                  status: in_progress
+                  description: Review backlog and create tasks
+                  category: work
+                  tags:
+                    - planning
+                    - sprint
+      responses:
+        '201':
+          description: Задача создана
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadTask'
+              examples:
+                created:
+                  value:
+                    id: 42
+                    title: Buy milk
+                    status: open
+                    description: ""
+                    category: ""
+                    tags: []
+                    created_at: "2026-05-17T12:00:00Z"
+        '400':
+          description: Некорректный JSON или ошибка валидации
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidJson:
+                  summary: Некорректный JSON
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid json body
+                validationError:
+                  summary: Ошибка валидации
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: validation_error
+                    message: validation error
+        '500':
+          description: Внутренняя ошибка сервера
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса может присутствовать в ответе
+              schema:
+                type: string
+components:
+  schemas:
+    TaskStatus:
+      type: string
+      description: Статус задачи
+      enum:
+        - open
+        - in_progress
+        - done
+        - closed
+    CreateTask:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - status
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Заголовок задачи
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Описание задачи
+        category:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Категория задачи
+        tags:
+          type: array
+          minItems: 1
+          maxItems: 500
+          description: Список тегов
+          items:
+            type: string
+            minLength: 1
+            maxLength: 30
+    ReadTask:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - description
+        - category
+        - tags
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+        title:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required:
+        - request_id
+        - status_code
+        - code
+        - message
+      properties:
+        request_id:
+          type: string
+        status_code:
+          type: integer
+          format: int32
+        code:
+          type: string
+          enum:
+            - bad_request
+            - validation_error
+        message:
+          type: string
