@@ -1,4 +1,4 @@
-// Package task contain commands and queries linked with TODO-tasks
+// Package task contain commands and queries linked with tasks
 package task
 
 // CreateCommand it's a command for service for creating new task

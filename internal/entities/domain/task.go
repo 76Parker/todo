@@ -18,7 +18,7 @@ var (
 
 	// ErrInvalidStatus domain error for invalid statuses
 	ErrInvalidStatus = errors.New("invalid status")
-	// ErrTaskNotFound error for situation where TODO-task not found in storage
+	// ErrTaskNotFound error for situation where task not found in storage
 	ErrTaskNotFound = errors.New("task not found")
 )
 

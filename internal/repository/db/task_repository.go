@@ -52,7 +52,7 @@ func (t *TaskRepository) Create(ctx context.Context, task domain.Task) (domain.T
 	return restoredTask, nil
 }
 
-// ReadByID extract TODO-task from DB
+// ReadByID extract task from DB
 func (t *TaskRepository) ReadByID(ctx context.Context, id int64) (domain.Task, error) {
 	sqlQuery := `SELECT id, title, description, status, category, tags, created_at 
 					 FROM todo.tasks WHERE id = $1`
