@@ -1,3 +1,4 @@
+// Package config provide configurable params from config.yaml
 package config
 
 import (
@@ -9,16 +10,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Validator validate config
 type Validator interface {
 	Validate(cfg *Config) error
 }
 
+// Config provide all configurable params
 type Config struct {
 	Logger   loglib.SlogConfig `yaml:"logger" validate:"required"`
 	Postgres pglib.Config      `yaml:"postgres" validate:"required"`
-	Http     httplib.Config    `yaml:"http" validate:"required"`
+	HTTP     httplib.Config    `yaml:"http" validate:"required"`
 }
 
+// Load is a constructor for Config struct
 func Load(configPath string) (Config, error) {
 	var cfg Config
 

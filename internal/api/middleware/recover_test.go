@@ -9,7 +9,7 @@ import (
 )
 
 func TestRecover(t *testing.T) {
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	next := http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 		panic("test")
 	})
 

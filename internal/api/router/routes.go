@@ -1,3 +1,4 @@
+// Package router uses for register HTTP-routs
 package router
 
 import (
@@ -12,10 +13,12 @@ const (
 	apiV1 string = "/v1"
 )
 
+// Handlers it's a container for handlers from package api
 type Handlers struct {
 	Tasks *api.TaskHandler
 }
 
+// New constructor for server http.Handler
 func New(handlers Handlers, log loglib.Logger) http.Handler {
 	mux := http.NewServeMux()
 	registerSwaggerRoutes(mux)
@@ -26,5 +29,7 @@ func New(handlers Handlers, log loglib.Logger) http.Handler {
 func registerV1TaskRoutes(mux *http.ServeMux, taskHandler *api.TaskHandler, log loglib.Logger) {
 	requestID := middleware.RequestID(log)
 	createHandler := http.HandlerFunc(taskHandler.Create)
+	readHandler := http.HandlerFunc(taskHandler.Read)
 	mux.Handle("POST "+apiV1+"/tasks", middleware.Recover(requestID(createHandler)))
+	mux.Handle("GET "+apiV1+"/tasks/{id}", middleware.Recover(requestID(readHandler)))
 }

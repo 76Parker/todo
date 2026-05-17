@@ -1,3 +1,4 @@
+// entrypoint to application, handle OS signals and graceful shutdown
 package main
 
 import (

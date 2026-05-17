@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 	"todo/internal/api/middleware"
 	"todo/internal/entities/domain"
 	"todo/internal/usecase/task"
@@ -104,6 +105,78 @@ func TestTaskHandler_Create(t *testing.T) {
 			defer func() {
 				_ = req.Body.Close()
 			}()
+			assert.Equal(t, tt.expectedCode, resp.StatusCode)
+		})
+	}
+}
+
+func TestTaskHandler_Read(t *testing.T) {
+	tests := []struct {
+		name             string
+		taskID           string
+		wantServiceCall  bool
+		wantValidateCall bool
+		serviceErr       error
+		validatorErr     error
+		expectedCode     int
+		serviceReturn    domain.Task
+	}{
+		{
+			name:             "StatusOK_1",
+			taskID:           "10",
+			wantServiceCall:  true,
+			wantValidateCall: true,
+			validatorErr:     nil,
+			serviceErr:       nil,
+			expectedCode:     http.StatusOK,
+			serviceReturn:    domain.ReconstituteTask(10, "", "", "", "", []string{}, time.Time{}),
+		},
+		{
+			name:             "StatusOK_2",
+			taskID:           "1",
+			serviceReturn:    domain.ReconstituteTask(1, "", "", "", "", []string{}, time.Time{}),
+			wantServiceCall:  true,
+			wantValidateCall: true,
+			validatorErr:     nil,
+			serviceErr:       nil,
+			expectedCode:     http.StatusOK,
+		}, {
+			name:             "BadRequest_1",
+			taskID:           "bad_request_id",
+			wantValidateCall: true,
+			wantServiceCall:  false,
+			validatorErr:     errors.New("validation error"),
+			serviceErr:       nil,
+			expectedCode:     http.StatusBadRequest,
+		},
+		{
+			name:             "BadRequest_2",
+			taskID:           "",
+			wantValidateCall: true,
+			wantServiceCall:  false,
+			validatorErr:     errors.New("validation error"),
+			serviceErr:       nil,
+			expectedCode:     http.StatusBadRequest,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			taskSvc := NewMockTaskService(ctrl)
+			if tt.wantServiceCall {
+				taskSvc.EXPECT().ReadByID(gomock.Any(), gomock.Any()).Return(tt.serviceReturn, nil)
+			}
+			mockLogger := loglib.NewMockLogger()
+			taskHandler := NewTaskHandler(taskSvc)
+			req := httptest.NewRequest(http.MethodGet, "/v1/tasks/"+tt.taskID, nil)
+			req.SetPathValue("id", tt.taskID)
+			rec := httptest.NewRecorder()
+			handler := middleware.RequestID(mockLogger)(
+				http.HandlerFunc(taskHandler.Read),
+			)
+			handler.ServeHTTP(rec, req)
+			resp := rec.Result()
 			assert.Equal(t, tt.expectedCode, resp.StatusCode)
 		})
 	}

@@ -10,6 +10,7 @@ import (
 
 const allowedPortsTag = "allowed_ports"
 
+// AllowedPortsError custom error for guard privileged ports
 type AllowedPortsError struct {
 	Field string
 	Value int
@@ -19,10 +20,12 @@ func (e AllowedPortsError) Error() string {
 	return fmt.Sprintf("field %s: port %d is out of allowed range (1023-65535)", e.Field, e.Value)
 }
 
+// PlaygroundValidator it's a go-playground implementations of Validator
 type PlaygroundValidator struct {
 	v *validator.Validate
 }
 
+// NewValidator construct Validator
 func NewValidator() (Validator, error) {
 	v := &PlaygroundValidator{}
 	v.v = validator.New()
@@ -32,6 +35,7 @@ func NewValidator() (Validator, error) {
 	return v, nil
 }
 
+// Validate validating Config
 func (v *PlaygroundValidator) Validate(cfg *Config) error {
 	if err := v.v.Struct(cfg); err != nil {
 		if ve, ok := errors.AsType[validator.ValidationErrors](err); ok {

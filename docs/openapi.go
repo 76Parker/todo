@@ -1,3 +1,4 @@
+// Package docs provide API-documentation
 package docs
 
 import _ "embed"

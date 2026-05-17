@@ -55,3 +55,18 @@ func (mr *MockRepositoryMockRecorder) Create(ctx, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), ctx, task)
 }
+
+// ReadByID mocks base method.
+func (m *MockRepository) ReadByID(ctx context.Context, id int64) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadByID", ctx, id)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadByID indicates an expected call of ReadByID.
+func (mr *MockRepositoryMockRecorder) ReadByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadByID", reflect.TypeOf((*MockRepository)(nil).ReadByID), ctx, id)
+}

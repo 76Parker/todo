@@ -1,3 +1,4 @@
+// Package api provide API-handlers for interact with the application
 package api
 
 import (

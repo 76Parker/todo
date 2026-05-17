@@ -1,3 +1,4 @@
+// Package app build all dependencies and provide methods for run and shutdown application
 package app
 
 import (
@@ -20,12 +21,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// App build app and run app
 type App struct {
 	s         *http.Server
 	l         *loglib.Slog
 	closeOnce sync.Once
 }
 
+// New is a constructor for App
 func New(ctx context.Context, cfg config.Config) (*App, error) {
 	log, err := initLogger(cfg.Logger)
 	if err != nil {
@@ -53,7 +56,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 
 	serverHandler := initRouter(handlers, log)
 
-	server := httplib.NewHTTPServer(ctx, cfg.Http, serverHandler)
+	server := httplib.NewHTTPServer(ctx, cfg.HTTP, serverHandler)
 
 	return &App{
 		s:         server,
@@ -62,6 +65,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}, nil
 }
 
+// Start run HTTP server
 func (a *App) Start() error {
 	a.l.Info("Starting HTTP server", "address", a.s.Addr)
 	swaggerMsg := fmt.Sprintf("Swagger available at http://%s/swagger", a.s.Addr)
@@ -71,6 +75,8 @@ func (a *App) Start() error {
 	}
 	return nil
 }
+
+// Shutdown implement graceful shutdown for app
 func (a *App) Shutdown(ctx context.Context) error {
 	a.l.Info("Shutting down HTTP server...")
 	a.closeOnce.Do(func() {

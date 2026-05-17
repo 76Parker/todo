@@ -47,4 +47,5 @@ func TestOpenAPIRoute(t *testing.T) {
 	assert.Contains(t, resp.Header.Get("Content-Type"), "application/yaml")
 	assert.Contains(t, rec.Body.String(), "openapi: 3.0.3")
 	assert.Contains(t, rec.Body.String(), "/v1/tasks")
+	assert.Contains(t, rec.Body.String(), "/v1/tasks/{id}")
 }

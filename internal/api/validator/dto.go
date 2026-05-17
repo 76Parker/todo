@@ -1,8 +1,10 @@
+// Package validator provide validate methods for user inputs
 package validator
 
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"todo/internal/entities/dto"
 
@@ -17,10 +19,12 @@ var (
 	notBlankTag = "notblank"
 )
 
+// DTO it's a validator for dto.DTO
 type DTO struct {
 	v *validator.Validate
 }
 
+// MustDtoValidator it's a Must-constructor for DTO. MAY PANIC IF REGISTER VALIDATION HAVE ERROR
 func MustDtoValidator() *DTO {
 	v := validator.New()
 	if err := v.RegisterValidation(notBlankTag, validators.NotBlank); err != nil {
@@ -30,6 +34,8 @@ func MustDtoValidator() *DTO {
 		v: v,
 	}
 }
+
+// Validate validating dto.DTO types
 func (v *DTO) Validate(dto dto.DTO) error {
 	if err := v.v.Struct(dto); err != nil {
 		if errs, ok := errors.AsType[validator.ValidationErrors](err); ok {
@@ -51,4 +57,19 @@ func (v *DTO) Validate(dto dto.DTO) error {
 		}
 	}
 	return nil
+}
+
+// ExtractAndValidateTaskID validate taskID path param and convert into int64
+func ExtractAndValidateTaskID(taskID string) (int64, error) {
+	if taskID == "" {
+		return 0, fmt.Errorf("task_id is empty")
+	}
+	id, err := strconv.ParseInt(taskID, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid task_id")
+	}
+	if id <= 0 {
+		return 0, fmt.Errorf("invalid task_id")
+	}
+	return id, nil
 }

@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 )
 
+// Recover catch panics and return http.StatusInternalServerError
 func Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
