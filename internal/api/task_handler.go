@@ -49,9 +49,10 @@ type DtoValidator interface {
 type TaskService interface {
 	Create(ctx context.Context, cmd task.CreateCommand) (domain.Task, error)
 	ReadByID(ctx context.Context, id int64) (domain.Task, error)
+	UpdateByID(ctx context.Context, cmd task.UpdateCommand) (domain.Task, error)
 }
 
-// Create external HTTP API for create Task
+// Create API handler for create Task (POST /v1/tasks)
 func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	log := ctxlib.GetLoggerFromContext(r.Context())
 	requestID := ctxlib.RequestID(r.Context())
@@ -103,6 +104,8 @@ func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+// Read API handler for read Task by ID (GET /v1/tasks/{id})
 func (t *TaskHandler) Read(w http.ResponseWriter, r *http.Request) {
 	log := ctxlib.GetLoggerFromContext(r.Context())
 	requestID := ctxlib.RequestID(r.Context())
@@ -136,4 +139,62 @@ func (t *TaskHandler) Read(w http.ResponseWriter, r *http.Request) {
 		log.Warn("encode dto.ReadTaskDTO failed", "error", err)
 	}
 	log.Info("read task completed", "id", id)
+}
+
+
+func (t *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
+	log := ctxlib.GetLoggerFromContext(r.Context())
+	requestID := ctxlib.RequestID(r.Context())
+	id := r.PathValue("id")
+	taskID, err := validator.ExtractAndValidateTaskID(id)
+	if err != nil {
+		log.Warn("ExtractAndValidateTaskID failed", "error", err, "id", id)
+		sendJSONError(w, apierr.ValidationFailedError(err.Error(), requestID))
+		return
+	}
+
+	var updateDto dto.UpdateTask
+	if err := json.NewDecoder(r.Body).Decode(&updateDto); err != nil {
+		log.Warn("decode dto.UpdateTask failed", "error", err, "id", id)
+		sendJSONError(w, apierr.ValidationFailedError(err.Error(), requestID))
+		return
+	}
+	cmd := task.UpdateCommand{
+		ID:          taskID,
+		Title:       updateDto.Title,
+		Status:      updateDto.Status,
+		Description: updateDto.Description,
+		Category:    updateDto.Category,
+	}
+	updatedTask, err := t.taskSvc.UpdateByID(r.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, domain.ErrTaskNotFound) {
+			log.Warn("task not found", "id", taskID)
+			w.Header().Set("X-Request-ID", requestID)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidStatus) {
+			log.Warn("invalid status", "status", updateDto.Status, "id", taskID)
+			sendJSONError(w, apierr.BadRequestError(err.Error(), requestID))
+			return
+		}
+		if errors.Is(err, domain.ErrNoChanges) {
+			log.Warn("no changes in update request", "id", taskID)
+			sendJSONError(w, apierr.BadRequestError("no changes in update task request", requestID))
+			return
+		}
+		log.Error("update task failed", "error", err, "id", taskID)
+		w.Header().Set("X-Request-ID", requestID)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	readDto := fromDomainTaskToReadTaskDTO(updatedTask)
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(readDto); err != nil {
+		log.Warn("encode dto.ReadTaskDTO failed", "error", err)
+	}
+	log.Info("update task completed", "id", id)
 }

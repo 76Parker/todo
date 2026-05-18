@@ -9,4 +9,5 @@ import (
 type Repository interface {
 	Create(ctx context.Context, task domain.Task) (domain.Task, error)
 	ReadByID(ctx context.Context, id int64) (domain.Task, error)
+	UpdateByID(ctx context.Context, updateCmd UpdateCommand) (domain.Task, error)
 }

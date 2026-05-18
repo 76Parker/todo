@@ -7,7 +7,9 @@ import (
 	"time"
 	"todo/internal/entities/domain"
 	"todo/internal/entities/table"
+	"todo/internal/usecase/task"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,8 +28,8 @@ func NewTaskRepository(pool *pgxpool.Pool) *TaskRepository {
 // Create new domain.Task in database
 func (t *TaskRepository) Create(ctx context.Context, task domain.Task) (domain.Task, error) {
 
-	sqlQuery := `INSERT INTO todo.tasks 
-    (title, status, description,category, tags) 
+	sqlQuery := `INSERT INTO todo.tasks
+    (title, status, description,category, tags)
 	 VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at`
 
 	var id int64
@@ -54,7 +56,7 @@ func (t *TaskRepository) Create(ctx context.Context, task domain.Task) (domain.T
 
 // ReadByID extract task from DB
 func (t *TaskRepository) ReadByID(ctx context.Context, id int64) (domain.Task, error) {
-	sqlQuery := `SELECT id, title, description, status, category, tags, created_at 
+	sqlQuery := `SELECT id, title, description, status, category, tags, created_at
 					 FROM todo.tasks WHERE id = $1`
 
 	rows, err := t.pool.Query(ctx, sqlQuery, id)
@@ -90,4 +92,65 @@ func pgTextArrayToStrings(arr pgtype.Array[pgtype.Text]) []string {
 		}
 	}
 	return result
+}
+
+
+// UpdateByID updates task by ID and returns updated task
+func (t *TaskRepository) UpdateByID(ctx context.Context, updateCmd task.UpdateCommand) (domain.Task, error) {
+	qb := squirrel.Update("todo.tasks").
+		PlaceholderFormat(squirrel.Dollar).
+		Where(squirrel.Eq{"id": updateCmd.ID})
+
+	qb, hasChanges := buildUpdateQuery(qb, updateCmd)
+	if !hasChanges {
+		return domain.Task{}, domain.ErrNoChanges
+	}
+	sqlQuery, args, err := qb.ToSql()
+	if err != nil {
+		return domain.Task{}, err
+	}
+	rows, err := t.pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return domain.Task{}, err
+	}
+	task, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[table.Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Task{}, domain.ErrTaskNotFound
+		}
+		return domain.Task{}, err
+	}
+	domainTask := domain.ReconstituteTask(
+		task.ID,
+		task.Title,
+		task.Description.String,
+		task.Status,
+		task.Category.String,
+		pgTextArrayToStrings(task.Tags),
+		task.CreatedAt)
+	return domainTask, nil
+}
+
+func buildUpdateQuery(qb squirrel.UpdateBuilder,updateCmd task.UpdateCommand) (squirrel.UpdateBuilder, bool) {
+	var hasChanges bool
+	if updateCmd.Title != nil {
+		qb = qb.Set("title", *updateCmd.Title)
+		hasChanges = true
+	}
+	if updateCmd.Description != nil {
+		qb = qb.Set("description", *updateCmd.Description)
+		hasChanges = true
+	}
+	if updateCmd.Category != nil {
+		qb = qb.Set("category", *updateCmd.Category)
+		hasChanges = true
+	}
+	if updateCmd.Status != nil {
+		qb = qb.Set("status", *updateCmd.Status)
+		hasChanges = true
+	}
+	if hasChanges {
+		qb = qb.Set("updated_at", squirrel.Expr("now()"))
+	}
+	return qb, hasChanges
 }

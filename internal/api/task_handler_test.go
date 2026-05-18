@@ -181,3 +181,58 @@ func TestTaskHandler_Read(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateTask(t *testing.T) {
+	tests := []struct {
+		name            string
+		taskID          string
+		wantValidateCall bool
+		wantServiceCall  bool
+		body            string
+		serviceReturn   domain.Task
+		updatedField    string
+		validatorErr     error
+		serviceErr       error
+		expectedCode     int
+	}{
+		{
+			name: "UpdateTask_Success",
+			taskID:          "10",
+			body:            `{"title": "Updated Title"}`,
+			serviceReturn:   domain.NewTask("Updated Title", "test", "test", []string{"123"},domain.Status("open")),
+			updatedField:    "title",
+			wantValidateCall: true,
+			wantServiceCall: true,
+			validatorErr:     nil,
+			serviceErr:       nil,
+			expectedCode:     200,
+		},
+
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockSvc := NewMockTaskService(ctrl)
+			if tt.wantServiceCall {
+				if tt.serviceErr != nil {
+					mockSvc.EXPECT().UpdateByID(gomock.Any(), gomock.Any()).Return(domain.Task{},tt.serviceErr)
+				} else {
+					mockSvc.EXPECT().UpdateByID(gomock.Any(), gomock.Any()).Return(domain.Task{}, nil)
+				}
+			}
+
+			mockLogger := loglib.NewMockLogger()
+			taskHandler := NewTaskHandler(mockSvc)
+			wrappedTaskHandler := middleware.RequestID(mockLogger) (
+				http.HandlerFunc(taskHandler.Update),
+			)
+			req := httptest.NewRequest(http.MethodPut, "/tasks/"+tt.taskID, strings.NewReader(tt.body))
+			req.SetPathValue("id", tt.taskID)
+			rec := httptest.NewRecorder()
+			wrappedTaskHandler.ServeHTTP(rec,req)
+			assert.Equal(t, tt.expectedCode, rec.Code)
+		})
+	}
+}

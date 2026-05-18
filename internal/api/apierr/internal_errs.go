@@ -30,7 +30,7 @@ func BadRequestError(message, requestID string) Error {
 	}
 }
 
-// ValidationFailedError it's a constructor for validation http.StatusBadRequest API errors. See `validate` tags in package `entities/dto`
+// ValidationFailedError it's a constructor for validate `go-playground` tags. See `validate` tags in package `entities/dto`
 func ValidationFailedError(message, requestID string) Error {
 	return Error{
 		Status:    http.StatusBadRequest,

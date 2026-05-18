@@ -20,6 +20,8 @@ var (
 	ErrInvalidStatus = errors.New("invalid status")
 	// ErrTaskNotFound error for situation where task not found in storage
 	ErrTaskNotFound = errors.New("task not found")
+
+	ErrNoChanges = errors.New("no changes in task update")
 )
 
 // NewStatus construct Status and check domain rules (check valid statuses for Task)

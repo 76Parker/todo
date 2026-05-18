@@ -70,3 +70,18 @@ func (mr *MockRepositoryMockRecorder) ReadByID(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadByID", reflect.TypeOf((*MockRepository)(nil).ReadByID), ctx, id)
 }
+
+// UpdateByID mocks base method.
+func (m *MockRepository) UpdateByID(ctx context.Context, updateCmd UpdateCommand) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateByID", ctx, updateCmd)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateByID indicates an expected call of UpdateByID.
+func (mr *MockRepositoryMockRecorder) UpdateByID(ctx, updateCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateByID", reflect.TypeOf((*MockRepository)(nil).UpdateByID), ctx, updateCmd)
+}
