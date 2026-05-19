@@ -25,3 +25,19 @@ func TestTaskReadRoutePattern(t *testing.T) {
 
 	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode)
 }
+
+func TestTaskUpdateRoutePattern(t *testing.T) {
+	r := New(Handlers{Tasks: api.NewTaskHandler(nil)}, loglib.NewMockLogger())
+
+	req := httptest.NewRequest(http.MethodPatch, "/v1/tasks/15", nil)
+	rec := httptest.NewRecorder()
+
+	r.ServeHTTP(rec, req)
+
+	resp := rec.Result()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode)
+}

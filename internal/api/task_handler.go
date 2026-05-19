@@ -159,6 +159,12 @@ func (t *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		sendJSONError(w, apierr.ValidationFailedError(err.Error(), requestID))
 		return
 	}
+	if err := t.validator.Validate(updateDto); err != nil {
+		log.Warn("validate dto.UpdateTask failed", "error", err, "id", id)
+		sendJSONError(w, apierr.ValidationFailedError(err.Error(), requestID))
+		return
+	}
+
 	cmd := task.UpdateCommand{
 		ID:          taskID,
 		Title:       updateDto.Title,

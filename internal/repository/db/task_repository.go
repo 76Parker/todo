@@ -149,8 +149,5 @@ func buildUpdateQuery(qb squirrel.UpdateBuilder,updateCmd task.UpdateCommand) (s
 		qb = qb.Set("status", *updateCmd.Status)
 		hasChanges = true
 	}
-	if hasChanges {
-		qb = qb.Set("updated_at", squirrel.Expr("now()"))
-	}
-	return qb, hasChanges
+	return qb.Suffix("RETURNING id, title, status, description, category, tags, created_at"), hasChanges
 }

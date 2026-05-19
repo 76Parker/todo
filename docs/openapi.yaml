@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Todo API
-  version: 1.1.0
-  description: API для создания и чтения задач.
+  version: 1.2.0
+  description: API для создания, чтения и обновления задач.
 servers:
   - url: /
 tags:
@@ -191,6 +191,118 @@ paths:
               description: Идентификатор запроса может присутствовать в ответе
               schema:
                 type: string
+    patch:
+      tags:
+        - Tasks
+      summary: Обновить задачу
+      description: Частично обновляет задачу по её идентификатору.
+      operationId: updateTask
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Идентификатор задачи
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTask'
+            examples:
+              title:
+                summary: Обновление заголовка
+                value:
+                  title: Updated Title
+              full:
+                summary: Обновление нескольких полей
+                value:
+                  title: Prepare release
+                  status: in_progress
+                  description: Finalize checklist
+                  category: work
+      responses:
+        '200':
+          description: Задача обновлена
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadTask'
+              examples:
+                updated:
+                  value:
+                    id: 42
+                    title: Prepare release
+                    status: in_progress
+                    description: Finalize checklist
+                    category: work
+                    tags: []
+                    created_at: "2026-05-19T12:00:00Z"
+        '400':
+          description: Некорректный JSON, ошибка валидации или неверный статус
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidJson:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: validation_error
+                    message: unexpected EOF
+                invalidTaskID:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: validation_error
+                    message: invalid task_id
+                invalidStatus:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid status
+                noChanges:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: no changes in update task request
+        '404':
+          description: Задача не найдена
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+        '500':
+          description: Внутренняя ошибка сервера
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса может присутствовать в ответе
+              schema:
+                type: string
 components:
   schemas:
     TaskStatus:
@@ -228,12 +340,33 @@ components:
         tags:
           type: array
           minItems: 1
-          maxItems: 500
+          maxItems: 10
           description: Список тегов
           items:
             type: string
             minLength: 1
             maxLength: 30
+    UpdateTask:
+      type: object
+      description: Частичное обновление задачи. Нужно передать хотя бы одно поле.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Новый заголовок задачи
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        description:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Новое описание задачи
+        category:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Новая категория задачи
     ReadTask:
       type: object
       required:

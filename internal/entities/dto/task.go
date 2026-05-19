@@ -25,10 +25,10 @@ type ReadTask struct {
 
 // UpdateTask dto for update task
 type UpdateTask struct {
-	Title       *string   `json:"title,omitempty" validate:"omitempty,min=1,max=200,notblank"`
-	Status      *string   `json:"status,omitempty" validate:"omitempty,min=1,max=20,notblank"`
-	Description *string   `json:"description,omitempty" validate:"omitempty,min=1,max=500,notblank"`
-	Category    *string   `json:"category,omitempty" validate:"omitempty,min=1,max=500,notblank"`
+	Title       *string   `json:"title,omitempty" validate:"omitnil,min=1,max=200,notblank"`
+	Status      *string   `json:"status,omitempty" validate:"omitnil,max=20"`
+	Description *string   `json:"description,omitempty" validate:"omitnil,max=500"`
+	Category    *string   `json:"category,omitempty" validate:"omitnil,max=500"`
 }
 
 // Type method for implement DTO interface
@@ -39,4 +39,9 @@ func (v CreateTask) Type() string {
 // Type method for implement DTO interface
 func (v ReadTask) Type() string {
 	return "ReadTask"
+}
+
+// Type method for implement DTO interface
+func (v UpdateTask) Type() string {
+	return "UpdateTask"
 }
