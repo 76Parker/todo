@@ -1,43 +1,61 @@
 openapi: 3.0.3
 info:
   title: Todo API
-  version: 1.5.0
-  description: API для создания, чтения, поиска, обновления задач и управления тегом задачи.
+  version: 2.0.0
+  description: |
+    HTTP API для работы со списком задач.
+
+    В текущей реализации публично доступны операции:
+    - создание задачи
+    - чтение задачи по ID
+    - поиск задач по `title`
+    - частичное обновление задачи
+    - добавление одного тега к задаче
+    - удаление одного тега у задачи
+
+    Важные нюансы контракта:
+    - `X-Request-ID` можно передать в запросе. Если заголовок не указан, сервер сгенерирует его сам.
+    - в `POST /v1/tasks` неизвестные поля JSON запрещены
+    - в `PATCH /v1/tasks/{id}` и в операциях с тегами неизвестные поля сейчас не запрещены
+    - некоторые поля запроса можно либо не передавать вовсе, либо передавать как `null`
+    - в ответах `description` и `category` никогда не бывают `null`: сервер возвращает пустую строку `""`, если значение отсутствует
+    - в ответах `tags` никогда не бывают `null`: сервер возвращает массив, обычно пустой `[]`, если тегов нет
 servers:
   - url: /
 tags:
   - name: Tasks
-    description: Операции с задачами
+    description: Создание, чтение, поиск, обновление задач и работа с тегами
 paths:
   /v1/tasks:
     get:
       tags:
         - Tasks
       summary: Найти задачи
-      description: Возвращает список задач. Сейчас поддерживается фильтр только по `title`.
+      description: |
+        Возвращает список задач.
+
+        Сейчас поддерживается только один фильтр:
+        - `title` — поиск/фильтрация по заголовку
+
+        Если фильтр не передан, поведение определяется текущей реализацией сервиса поиска.
       operationId: queryTasks
       parameters:
+        - $ref: '#/components/parameters/XRequestID'
         - in: query
           name: title
           required: false
-          description: Фильтр по заголовку задачи
+          description: |
+            Фильтр по заголовку задачи.
+
+            Параметр необязателен. Пустая строка допустима.
           schema:
             type: string
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
       responses:
         '200':
           description: Список задач
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -46,6 +64,7 @@ paths:
                   $ref: '#/components/schemas/ReadTask'
               examples:
                 found:
+                  summary: Найдено несколько задач
                   value:
                     - id: 42
                       title: Buy milk
@@ -63,28 +82,25 @@ paths:
                         - grocery
                       created_at: "2026-05-20T13:00:00Z"
                 empty:
+                  summary: Ничего не найдено
                   value: []
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
     post:
       tags:
         - Tasks
       summary: Создать задачу
-      description: Создаёт новую задачу и возвращает сохранённую сущность.
+      description: |
+        Создаёт новую задачу.
+
+        Особенности:
+        - `title` и `status` обязательны
+        - `description`, `category` и `tags` можно опустить
+        - `description`, `category` и `tags` также можно передать как `null`
+        - неизвестные поля JSON запрещены
       operationId: createTask
       parameters:
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/XRequestID'
       requestBody:
         required: true
         content:
@@ -97,6 +113,14 @@ paths:
                 value:
                   title: Buy milk
                   status: open
+              nullableOptionalFields:
+                summary: Опциональные поля явно переданы как null
+                value:
+                  title: Buy milk
+                  status: open
+                  description: null
+                  category: null
+                  tags: null
               full:
                 summary: Полный запрос
                 value:
@@ -112,15 +136,14 @@ paths:
           description: Задача создана
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReadTask'
               examples:
                 created:
+                  summary: Созданная задача
                   value:
                     id: 42
                     title: Buy milk
@@ -128,47 +151,40 @@ paths:
                     description: ""
                     category: ""
                     tags: []
-                    created_at: "2026-05-17T12:00:00Z"
+                    created_at: "2026-05-20T12:00:00Z"
         '400':
-          description: Некорректный JSON или ошибка валидации
+          description: Некорректный JSON, ошибка валидации или невалидный статус
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
                 invalidJson:
-                  summary: Некорректный JSON
+                  summary: Неизвестное поле или сломанный JSON
                   value:
                     request_id: clx7f4b2f0000qtr8gk1d0abc
                     status_code: 400
                     code: bad_request
                     message: invalid json body
                 validationError:
-                  summary: Ошибка валидации
+                  summary: Ошибка валидации DTO
                   value:
                     request_id: clx7f4b2f0000qtr8gk1d0abc
                     status_code: 400
                     code: validation_error
-                    message: validation error
+                    message: title is required
                 invalidStatus:
-                  summary: Невалидный статус
+                  summary: Статус не прошёл доменную валидацию
                   value:
                     request_id: clx7f4b2f0000qtr8gk1d0abc
                     status_code: 400
                     code: bad_request
                     message: invalid status
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
   /v1/tasks/{id}:
     get:
       tags:
@@ -177,29 +193,14 @@ paths:
       description: Возвращает задачу по её идентификатору.
       operationId: readTask
       parameters:
-        - in: path
-          name: id
-          required: true
-          description: Идентификатор задачи
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/TaskID'
+        - $ref: '#/components/parameters/XRequestID'
       responses:
         '200':
           description: Задача найдена
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -213,14 +214,12 @@ paths:
                     description: ""
                     category: ""
                     tags: []
-                    created_at: "2026-05-17T12:00:00Z"
+                    created_at: "2026-05-20T12:00:00Z"
         '400':
           description: Некорректный идентификатор задачи
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -242,9 +241,7 @@ paths:
           description: Задача не найдена
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -257,34 +254,23 @@ paths:
                     code: resource_not_found
                     message: task not found
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
     patch:
       tags:
         - Tasks
-      summary: Обновить задачу
-      description: Частично обновляет задачу по её идентификатору.
+      summary: Частично обновить задачу
+      description: |
+        Частично обновляет задачу по её идентификатору.
+
+        Особенности текущей реализации:
+        - все поля тела запроса необязательны
+        - поля можно либо не передавать, либо передавать как `null`
+        - если все поля отсутствуют или равны `null`, сервис может вернуть ошибку `no changes in update task request`
+        - `description` и `category` можно очистить пустой строкой `""`
       operationId: updateTask
       parameters:
-        - in: path
-          name: id
-          required: true
-          description: Идентификатор задачи
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/TaskID'
+        - $ref: '#/components/parameters/XRequestID'
       requestBody:
         required: true
         content:
@@ -296,6 +282,15 @@ paths:
                 summary: Обновление заголовка
                 value:
                   title: Updated Title
+              clearDescription:
+                summary: Очистка описания
+                value:
+                  description: ""
+              explicitNulls:
+                summary: Поля переданы как null и будут трактоваться как отсутствующие
+                value:
+                  title: null
+                  status: null
               full:
                 summary: Обновление нескольких полей
                 value:
@@ -308,9 +303,7 @@ paths:
           description: Задача обновлена
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -324,14 +317,12 @@ paths:
                     description: Finalize checklist
                     category: work
                     tags: []
-                    created_at: "2026-05-19T12:00:00Z"
+                    created_at: "2026-05-20T12:00:00Z"
         '400':
-          description: Некорректный JSON, ошибка валидации или неверный статус
+          description: Некорректный JSON, ошибка валидации, невалидный статус или отсутствие изменений
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -365,9 +356,7 @@ paths:
           description: Задача не найдена
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -380,35 +369,23 @@ paths:
                     code: resource_not_found
                     message: task not found
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
   /v1/tasks/{id}/tags:
     post:
       tags:
         - Tasks
       summary: Добавить тег к задаче
-      description: Добавляет один тег к задаче по её идентификатору.
+      description: |
+        Добавляет один тег к задаче по её идентификатору.
+
+        Особенности:
+        - тело запроса принимает ровно одно поле `tag`
+        - `tag` не может быть `null`
+        - пустая строка и строка из одних пробелов невалидны
       operationId: addTaskTag
       parameters:
-        - in: path
-          name: id
-          required: true
-          description: Идентификатор задачи
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/TaskID'
+        - $ref: '#/components/parameters/XRequestID'
       requestBody:
         required: true
         content:
@@ -424,20 +401,27 @@ paths:
           description: Тег добавлен
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReadTask'
+              examples:
+                updated:
+                  value:
+                    id: 42
+                    title: Buy milk
+                    status: open
+                    description: ""
+                    category: ""
+                    tags:
+                      - urgent
+                    created_at: "2026-05-20T12:00:00Z"
         '400':
-          description: Некорректный идентификатор, JSON или тег
+          description: Некорректный идентификатор, JSON или сам тег
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -465,9 +449,7 @@ paths:
           description: Задача не найдена
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -480,34 +462,22 @@ paths:
                     code: resource_not_found
                     message: task not found
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
     delete:
       tags:
         - Tasks
       summary: Удалить тег у задачи
-      description: Удаляет один тег у задачи по её идентификатору.
+      description: |
+        Удаляет один тег у задачи по её идентификатору.
+
+        Особенности:
+        - тело запроса принимает ровно одно поле `tag`
+        - `tag` не может быть `null`
+        - если сервис не смог найти ни задачу, ни тег, он сейчас возвращает единый ответ `tag or task not found`
       operationId: deleteTaskTag
       parameters:
-        - in: path
-          name: id
-          required: true
-          description: Идентификатор задачи
-          schema:
-            type: integer
-            format: int64
-            minimum: 1
-        - in: header
-          name: X-Request-ID
-          required: false
-          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
-          schema:
-            type: string
-            maxLength: 128
+        - $ref: '#/components/parameters/TaskID'
+        - $ref: '#/components/parameters/XRequestID'
       requestBody:
         required: true
         content:
@@ -523,20 +493,26 @@ paths:
           description: Тег удалён
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReadTask'
+              examples:
+                updated:
+                  value:
+                    id: 42
+                    title: Buy milk
+                    status: open
+                    description: ""
+                    category: ""
+                    tags: []
+                    created_at: "2026-05-20T12:00:00Z"
         '400':
-          description: Некорректный идентификатор, JSON или тег
+          description: Некорректный идентификатор, JSON или сам тег
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
@@ -564,38 +540,61 @@ paths:
           description: Задача или тег не найдены
           headers:
             X-Request-ID:
-              description: Идентификатор запроса
-              schema:
-                type: string
+              $ref: '#/components/headers/XRequestID'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
-                taskNotFound:
-                  value:
-                    request_id: clx7f4b2f0000qtr8gk1d0abc
-                    status_code: 404
-                    code: resource_not_found
-                    message: task not found
-                tagNotFound:
+                taskOrTagNotFound:
                   value:
                     request_id: clx7f4b2f0000qtr8gk1d0abc
                     status_code: 404
                     code: resource_not_found
                     message: tag or task not found
         '500':
-          description: Внутренняя ошибка сервера
-          headers:
-            X-Request-ID:
-              description: Идентификатор запроса может присутствовать в ответе
-              schema:
-                type: string
+          $ref: '#/components/responses/InternalServerError'
 components:
+  parameters:
+    XRequestID:
+      in: header
+      name: X-Request-ID
+      required: false
+      description: |
+        Пользовательский request ID.
+
+        Если не передан, сервер сгенерирует значение сам и вернёт его в ответе.
+        Если передан слишком длинный идентификатор, сервер может заменить его на новый.
+      schema:
+        type: string
+        maxLength: 128
+    TaskID:
+      in: path
+      name: id
+      required: true
+      description: Идентификатор задачи
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  headers:
+    XRequestID:
+      description: Идентификатор запроса, который сервер использовал при обработке
+      schema:
+        type: string
+  responses:
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/XRequestID'
   schemas:
     TaskStatus:
       type: string
-      description: Статус задачи
+      description: |
+        Статус задачи.
+
+        Допустимые значения определяются доменной моделью.
       enum:
         - open
         - in_progress
@@ -612,49 +611,113 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-          description: Заголовок задачи
+          description: |
+            Заголовок задачи.
+
+            Обязательное поле. Пустая строка и строка из одних пробелов невалидны.
         status:
-          $ref: '#/components/schemas/TaskStatus'
+          allOf:
+            - $ref: '#/components/schemas/TaskStatus'
+          description: |
+            Статус новой задачи.
+
+            Обязательное поле.
         description:
           type: string
+          nullable: true
           minLength: 1
           maxLength: 500
-          description: Описание задачи
+          description: |
+            Описание задачи.
+
+            Поле необязательное.
+            Допустимы варианты:
+            - поле отсутствует
+            - поле равно `null`
+            - поле содержит строку длиной от 1 до 500 символов
         category:
           type: string
+          nullable: true
           minLength: 1
           maxLength: 500
-          description: Категория задачи
+          description: |
+            Категория задачи.
+
+            Поле необязательное.
+            Допустимы варианты:
+            - поле отсутствует
+            - поле равно `null`
+            - поле содержит строку длиной от 1 до 500 символов
         tags:
           type: array
+          nullable: true
           minItems: 1
           maxItems: 10
-          description: Список тегов
+          description: |
+            Список тегов.
+
+            Поле необязательное.
+            Допустимы варианты:
+            - поле отсутствует
+            - поле равно `null`
+            - поле содержит от 1 до 10 тегов
           items:
             type: string
             minLength: 1
             maxLength: 30
+            description: Один тег
     UpdateTask:
       type: object
-      description: Частичное обновление задачи. Нужно передать хотя бы одно поле.
+      additionalProperties: true
+      description: |
+        Частичное обновление задачи.
+
+        Все поля необязательны и могут отсутствовать.
+        Все поля также допускают `null`, потому что в Go они представлены указателями.
+
+        Важная особенность текущего сервиса:
+        - `description` и `category` можно очистить пустой строкой `""`
+        - если все поля отсутствуют или равны `null`, обновлять будет нечего
       properties:
         title:
           type: string
+          nullable: true
           minLength: 1
           maxLength: 200
-          description: Новый заголовок задачи
+          description: |
+            Новый заголовок задачи.
+
+            Может отсутствовать или быть `null`.
+            Пустая строка и строка из одних пробелов невалидны.
         status:
-          $ref: '#/components/schemas/TaskStatus'
+          allOf:
+            - $ref: '#/components/schemas/TaskStatus'
+          nullable: true
+          description: |
+            Новый статус задачи.
+
+            Может отсутствовать или быть `null`.
         description:
           type: string
+          nullable: true
           maxLength: 500
-          description: Новое описание задачи
+          description: |
+            Новое описание задачи.
+
+            Может отсутствовать или быть `null`.
+            Пустая строка `""` допустима и может использоваться для очистки значения.
         category:
           type: string
+          nullable: true
           maxLength: 500
-          description: Новая категория задачи
+          description: |
+            Новая категория задачи.
+
+            Может отсутствовать или быть `null`.
+            Пустая строка `""` допустима и может использоваться для очистки значения.
     Tag:
       type: object
+      additionalProperties: true
       required:
         - tag
       properties:
@@ -662,7 +725,12 @@ components:
           type: string
           minLength: 1
           maxLength: 30
-          description: Тег для добавления или удаления
+          description: |
+            Один тег для добавления или удаления.
+
+            Поле обязательное.
+            Значение `null` не поддерживается.
+            Пустая строка и строка из одних пробелов невалидны.
     ReadTask:
       type: object
       required:
@@ -677,21 +745,44 @@ components:
         id:
           type: integer
           format: int64
+          description: Идентификатор задачи
         title:
           type: string
+          description: Заголовок задачи
         status:
-          $ref: '#/components/schemas/TaskStatus'
+          allOf:
+            - $ref: '#/components/schemas/TaskStatus'
+          description: Текущий статус задачи
         description:
           type: string
+          nullable: false
+          description: |
+            Описание задачи.
+
+            В ответе это поле никогда не равно `null`.
+            Если описание отсутствует в хранилище, сервер возвращает пустую строку `""`.
         category:
           type: string
+          nullable: false
+          description: |
+            Категория задачи.
+
+            В ответе это поле никогда не равно `null`.
+            Если категория отсутствует в хранилище, сервер возвращает пустую строку `""`.
         tags:
           type: array
+          nullable: false
+          description: |
+            Список тегов задачи.
+
+            В ответе это поле никогда не равно `null`.
+            Если тегов нет, сервер обычно возвращает пустой массив `[]`.
           items:
             type: string
         created_at:
           type: string
           format: date-time
+          description: Время создания задачи в формате RFC3339
     Error:
       type: object
       required:
@@ -702,14 +793,18 @@ components:
       properties:
         request_id:
           type: string
+          description: Request ID, использованный сервером
         status_code:
           type: integer
           format: int32
+          description: HTTP статус-код
         code:
           type: string
+          description: Машинно-читаемый код ошибки
           enum:
             - bad_request
             - validation_error
             - resource_not_found
         message:
           type: string
+          description: Человекочитаемое описание ошибки

@@ -57,3 +57,8 @@ func (t *Service) DeleteTagByID(ctx context.Context, cmd TagCommand) (domain.Tas
 func (t *Service) QueryTasks(ctx context.Context, cmd QueryCommand) ([]domain.Task, error) {
 	return t.repo.QueryTasks(ctx, cmd)
 }
+
+// DeleteTaskByID delete task from storage by id
+func (t *Service) DeleteTaskByID(ctx context.Context, id int64) error {
+	return t.repo.DeleteByID(ctx, id)
+}

@@ -235,3 +235,16 @@ func (t *TaskRepository) QueryTasks(ctx context.Context, cmd task.QueryCommand) 
 	}
 	return domainTasks, nil
 }
+
+// DeleteByID deletes a task by its ID.
+func (t *TaskRepository) DeleteByID(ctx context.Context, id int64) error {
+	sqlQuery := `DELETE FROM todo.tasks WHERE id = $1`
+	cmd, err := t.pool.Exec(ctx, sqlQuery, id)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return domain.ErrTaskNotFound
+	}
+	return nil
+}

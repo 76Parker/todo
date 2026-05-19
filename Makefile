@@ -9,6 +9,10 @@ coverage:
 
 .PHONY: test
 
+run:
+	golangci-lint run
+	go run $(MAIN)
+
 test:
 	go test -v ./...
 
@@ -22,4 +26,3 @@ linux-build:
 
 arm-build:
 	GOOS=darwin GOARCH=arm64 go build -o $(APP_NAME) $(MAIN)
-

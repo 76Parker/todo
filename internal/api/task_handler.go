@@ -50,6 +50,7 @@ type TaskService interface {
 	Create(ctx context.Context, createCmd task.CreateCommand) (domain.Task, error)
 	ReadByID(ctx context.Context, id int64) (domain.Task, error)
 	UpdateByID(ctx context.Context, updateCmd task.UpdateCommand) (domain.Task, error)
+	DeleteTaskByID(ctx context.Context, id int64) error
 	AddTagByID(ctx context.Context, addTagCmd task.TagCommand) (domain.Task, error)
 	DeleteTagByID(ctx context.Context, deleteTagCmd task.TagCommand) (domain.Task, error)
 	QueryTasks(ctx context.Context, queryCmd task.QueryCommand) ([]domain.Task, error)
@@ -330,4 +331,34 @@ func (t *TaskHandler) QueryTasks(w http.ResponseWriter, r *http.Request) {
 		log.Warn("search tasks: encode dto.ReadTaskDTO failed", "error", err, "query", query)
 	}
 	log.Info("search tasks completed", "query", query)
+}
+
+// DeleteTask API handler for deleting a task by ID.
+func (t *TaskHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	log := ctxlib.GetLoggerFromContext(r.Context())
+	requestID := ctxlib.RequestID(r.Context())
+	id := r.PathValue("id")
+
+	taskID, err := validator.ExtractAndValidateTaskID(id)
+	if err != nil {
+		log.Warn("delete task failed", "error", err.Error(), "task_id", id)
+		sendJSONError(w, apierr.ValidationFailedError("invalid task_id", requestID))
+		return
+	}
+
+	if err := t.taskSvc.DeleteTaskByID(r.Context(), taskID); err != nil {
+		if err == domain.ErrTaskNotFound {
+			log.Warn("delete task failed", "error", err.Error(), "task_id", taskID)
+			sendJSONError(w, apierr.NotFoundError("task not found", requestID))
+			return
+		}
+		log.Error("delete task failed", "error", err.Error(), "task_id", taskID)
+		w.Header().Set("X-Request-ID", requestID)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.WriteHeader(http.StatusOK)
+	log.Info("delete task completed", "task_id", taskID)
 }

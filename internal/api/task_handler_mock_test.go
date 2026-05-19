@@ -126,6 +126,20 @@ func (mr *MockTaskServiceMockRecorder) DeleteTagByID(ctx, deleteTagCmd any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTagByID", reflect.TypeOf((*MockTaskService)(nil).DeleteTagByID), ctx, deleteTagCmd)
 }
 
+// DeleteTaskByID mocks base method.
+func (m *MockTaskService) DeleteTaskByID(ctx context.Context, id int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTaskByID", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTaskByID indicates an expected call of DeleteTaskByID.
+func (mr *MockTaskServiceMockRecorder) DeleteTaskByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTaskByID", reflect.TypeOf((*MockTaskService)(nil).DeleteTaskByID), ctx, id)
+}
+
 // QueryTasks mocks base method.
 func (m *MockTaskService) QueryTasks(ctx context.Context, queryCmd task.QueryCommand) ([]domain.Task, error) {
 	m.ctrl.T.Helper()

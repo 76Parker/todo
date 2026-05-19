@@ -10,7 +10,7 @@ linters:
     - govet
     - staticcheck
     - revive
-
+    - godox
 formatters:
   enable:
     - goimports

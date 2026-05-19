@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"todo/internal/api"
 	"todo/internal/api/router"
@@ -56,9 +58,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	serverHandler := initRouter(handlers, log)
-	serverHandlerWithDefaultCORS := cors.Default().Handler(serverHandler)
-
-	server := httplib.NewHTTPServer(ctx, cfg.HTTP, serverHandlerWithDefaultCORS)
+	serverHandlerWithDefaultCORS := cors.New(defaultCORSOptions())
+	h := serverHandlerWithDefaultCORS.Handler(serverHandler)
+	server := httplib.NewHTTPServer(ctx, cfg.HTTP, h)
 
 	return &App{
 		s:         server,
@@ -98,4 +100,32 @@ func initPostgres(ctx context.Context, cfg pglib.Config) (*pgxpool.Pool, error) 
 func initRouter(handlers router.Handlers, log loglib.Logger) http.Handler {
 	r := router.New(handlers, log)
 	return r
+}
+
+func defaultCORSOptions() cors.Options {
+	return cors.Options{
+		AllowOriginFunc:  isTrustedOrigin,
+		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodDelete, http.MethodOptions},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Origin", "X-Request-ID", "X-Requested-With"},
+		ExposedHeaders:   []string{"X-Request-ID"},
+		AllowCredentials: true,
+	}
+}
+
+func isTrustedOrigin(origin string) bool {
+	if origin == "" {
+		return false
+	}
+
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+
+	host := strings.ToLower(u.Hostname())
+	if host == "localhost" || host == "127.0.0.1" {
+		return true
+	}
+
+	return false
 }
