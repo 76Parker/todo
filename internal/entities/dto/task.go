@@ -22,13 +22,12 @@ type ReadTask struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-
 // UpdateTask dto for update task
 type UpdateTask struct {
-	Title       *string   `json:"title,omitempty" validate:"omitnil,min=1,max=200,notblank"`
-	Status      *string   `json:"status,omitempty" validate:"omitnil,max=20"`
-	Description *string   `json:"description,omitempty" validate:"omitnil,max=500"`
-	Category    *string   `json:"category,omitempty" validate:"omitnil,max=500"`
+	Title       *string `json:"title,omitempty" validate:"omitnil,min=1,max=200,notblank"`
+	Status      *string `json:"status,omitempty" validate:"omitnil,max=20"`
+	Description *string `json:"description,omitempty" validate:"omitnil,max=500"`
+	Category    *string `json:"category,omitempty" validate:"omitnil,max=500"`
 }
 
 // Type method for implement DTO interface

@@ -94,7 +94,6 @@ func pgTextArrayToStrings(arr pgtype.Array[pgtype.Text]) []string {
 	return result
 }
 
-
 // UpdateByID updates task by ID and returns updated task
 func (t *TaskRepository) UpdateByID(ctx context.Context, updateCmd task.UpdateCommand) (domain.Task, error) {
 	qb := squirrel.Update("todo.tasks").
@@ -131,7 +130,7 @@ func (t *TaskRepository) UpdateByID(ctx context.Context, updateCmd task.UpdateCo
 	return domainTask, nil
 }
 
-func buildUpdateQuery(qb squirrel.UpdateBuilder,updateCmd task.UpdateCommand) (squirrel.UpdateBuilder, bool) {
+func buildUpdateQuery(qb squirrel.UpdateBuilder, updateCmd task.UpdateCommand) (squirrel.UpdateBuilder, bool) {
 	var hasChanges bool
 	if updateCmd.Title != nil {
 		qb = qb.Set("title", *updateCmd.Title)

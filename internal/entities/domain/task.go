@@ -16,11 +16,12 @@ var (
 	statusDone       Status = "done"
 	statusClosed     Status = "closed"
 
-	// ErrInvalidStatus domain error for invalid statuses
+	// ErrInvalidStatus error for invalid statuses
 	ErrInvalidStatus = errors.New("invalid status")
 	// ErrTaskNotFound error for situation where task not found in storage
 	ErrTaskNotFound = errors.New("task not found")
 
+	// ErrNoChanges error for no changes in task update
 	ErrNoChanges = errors.New("no changes in task update")
 )
 

@@ -184,53 +184,53 @@ func TestTaskHandler_Read(t *testing.T) {
 
 func TestUpdateTask(t *testing.T) {
 	tests := []struct {
-		name            string
-		taskID          string
+		name             string
+		taskID           string
 		wantValidateCall bool
 		wantServiceCall  bool
-		body            string
-		serviceReturn   domain.Task
-		updatedField    string
+		body             string
+		serviceReturn    domain.Task
+		updatedField     string
 		validatorErr     error
 		serviceErr       error
 		expectedCode     int
 	}{
 		{
-			name: "UpdateTask_Success",
-			taskID:          "10",
-			body:            `{"title": "Updated Title"}`,
-			serviceReturn:   domain.NewTask("Updated Title", "test", "test", []string{"123"},domain.Status("open")),
-			updatedField:    "title",
+			name:             "UpdateTask_Success",
+			taskID:           "10",
+			body:             `{"title": "Updated Title"}`,
+			serviceReturn:    domain.NewTask("Updated Title", "test", "test", []string{"123"}, domain.Status("open")),
+			updatedField:     "title",
 			wantValidateCall: true,
-			wantServiceCall: true,
+			wantServiceCall:  true,
 			validatorErr:     nil,
 			serviceErr:       nil,
 			expectedCode:     http.StatusOK,
 		},
 		{
-			name: "UpdateTask_ValidateError",
-			taskID:          "10",
-			body:            `{"title":""}`,
+			name:             "UpdateTask_ValidateError",
+			taskID:           "10",
+			body:             `{"title":""}`,
 			wantValidateCall: true,
-			wantServiceCall: false,
+			wantServiceCall:  false,
 			validatorErr:     errors.New("title is required"),
 			serviceErr:       nil,
 			expectedCode:     http.StatusBadRequest,
 		},
 		{
-			name: "UpdateTask_NotFound",
-			taskID:          "11",
-			body:            `{"title": "Updated Title"}`,
+			name:             "UpdateTask_NotFound",
+			taskID:           "11",
+			body:             `{"title": "Updated Title"}`,
 			wantValidateCall: true,
-			wantServiceCall: true,
+			wantServiceCall:  true,
 			validatorErr:     nil,
 			serviceErr:       domain.ErrTaskNotFound,
 			expectedCode:     http.StatusNotFound,
 		},
 		{
-			name: "UpdateTask_InvalidJSON",
-			taskID:          "10",
-			body:            `{"title": "Updated Tit}`,
+			name:             "UpdateTask_InvalidJSON",
+			taskID:           "10",
+			body:             `{"title": "Updated Tit}`,
 			wantValidateCall: false,
 			wantServiceCall:  false,
 			validatorErr:     errors.New("invalid JSON"),
@@ -238,39 +238,39 @@ func TestUpdateTask(t *testing.T) {
 			expectedCode:     http.StatusBadRequest,
 		},
 		{
-			name: "UpdateTask_InvalidStatus",
-			taskID:          "10",
-			body:            `{"status": "fsdfsdf"}`,
+			name:             "UpdateTask_InvalidStatus",
+			taskID:           "10",
+			body:             `{"status": "fsdfsdf"}`,
 			wantValidateCall: true,
 			wantServiceCall:  true,
 			validatorErr:     nil,
 			serviceErr:       domain.ErrInvalidStatus,
 			expectedCode:     http.StatusBadRequest,
 		}, {
-			name: "UpdateTask_BlankTitle",
-			taskID:          "10",
-			body:            `{"title": ""}`,
+			name:             "UpdateTask_BlankTitle",
+			taskID:           "10",
+			body:             `{"title": ""}`,
 			wantValidateCall: true,
 			wantServiceCall:  false,
 			validatorErr:     errors.New("title is required"),
 			serviceErr:       nil,
 			expectedCode:     http.StatusBadRequest,
-		},{
-			name: "UpdateTask_ClearDescription",
-			taskID:          "10",
-			body:            `{"description": ""}`,
+		}, {
+			name:             "UpdateTask_ClearDescription",
+			taskID:           "10",
+			body:             `{"description": ""}`,
 			wantValidateCall: true,
 			wantServiceCall:  true,
-			validatorErr:    nil,
+			validatorErr:     nil,
 			serviceErr:       nil,
 			expectedCode:     http.StatusOK,
 		}, {
-			name: "UpdateTask_BlankStatus",
-			taskID:          "10",
-			body:            `{"status": ""}`,
+			name:             "UpdateTask_BlankStatus",
+			taskID:           "10",
+			body:             `{"status": ""}`,
 			wantValidateCall: true,
 			wantServiceCall:  true,
-			validatorErr:   nil,
+			validatorErr:     nil,
 			serviceErr:       domain.ErrInvalidStatus,
 			expectedCode:     http.StatusBadRequest,
 		},
@@ -283,7 +283,7 @@ func TestUpdateTask(t *testing.T) {
 			mockSvc := NewMockTaskService(ctrl)
 			if tt.wantServiceCall {
 				if tt.serviceErr != nil {
-					mockSvc.EXPECT().UpdateByID(gomock.Any(), gomock.Any()).Return(domain.Task{},tt.serviceErr)
+					mockSvc.EXPECT().UpdateByID(gomock.Any(), gomock.Any()).Return(domain.Task{}, tt.serviceErr)
 				} else {
 					mockSvc.EXPECT().UpdateByID(gomock.Any(), gomock.Any()).Return(domain.Task{}, nil)
 				}
@@ -291,13 +291,13 @@ func TestUpdateTask(t *testing.T) {
 
 			mockLogger := loglib.NewMockLogger()
 			taskHandler := NewTaskHandler(mockSvc)
-			wrappedTaskHandler := middleware.RequestID(mockLogger) (
+			wrappedTaskHandler := middleware.RequestID(mockLogger)(
 				http.HandlerFunc(taskHandler.Update),
 			)
 			req := httptest.NewRequest(http.MethodPut, "/tasks/"+tt.taskID, strings.NewReader(tt.body))
 			req.SetPathValue("id", tt.taskID)
 			rec := httptest.NewRecorder()
-			wrappedTaskHandler.ServeHTTP(rec,req)
+			wrappedTaskHandler.ServeHTTP(rec, req)
 			assert.Equal(t, tt.expectedCode, rec.Code)
 		})
 	}

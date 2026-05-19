@@ -104,7 +104,6 @@ func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
 // Read API handler for read Task by ID (GET /v1/tasks/{id})
 func (t *TaskHandler) Read(w http.ResponseWriter, r *http.Request) {
 	log := ctxlib.GetLoggerFromContext(r.Context())
@@ -141,7 +140,7 @@ func (t *TaskHandler) Read(w http.ResponseWriter, r *http.Request) {
 	log.Info("read task completed", "id", id)
 }
 
-
+// Update API handler for update Task by ID (PATCH /v1/tasks/{id}) - updates a task's title, category, description, or status
 func (t *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	log := ctxlib.GetLoggerFromContext(r.Context())
 	requestID := ctxlib.RequestID(r.Context())
