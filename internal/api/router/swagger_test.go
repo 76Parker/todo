@@ -48,5 +48,11 @@ func TestOpenAPIRoute(t *testing.T) {
 	assert.Contains(t, rec.Body.String(), "openapi: 3.0.3")
 	assert.Contains(t, rec.Body.String(), "/v1/tasks")
 	assert.Contains(t, rec.Body.String(), "/v1/tasks/{id}")
+	assert.Contains(t, rec.Body.String(), "/v1/tasks/{id}/tags")
+	assert.Contains(t, rec.Body.String(), "operationId: queryTasks")
+	assert.Contains(t, rec.Body.String(), "operationId: addTaskTag")
+	assert.Contains(t, rec.Body.String(), "operationId: deleteTaskTag")
+	assert.Contains(t, rec.Body.String(), "tag or task not found")
+	assert.Contains(t, rec.Body.String(), "resource_not_found")
 	assert.Contains(t, rec.Body.String(), "patch:")
 }

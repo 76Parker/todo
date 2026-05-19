@@ -42,3 +42,18 @@ func (t *Service) UpdateByID(ctx context.Context, cmd UpdateCommand) (domain.Tas
 	}
 	return t.repo.UpdateByID(ctx, cmd)
 }
+
+// AddTagByID handle TagCommand use case for adding tag to task
+func (t *Service) AddTagByID(ctx context.Context, cmd TagCommand) (domain.Task, error) {
+	return t.repo.AddTagByID(ctx, cmd)
+}
+
+// DeleteTagByID handle TagCommand use case for removing tag from task
+func (t *Service) DeleteTagByID(ctx context.Context, cmd TagCommand) (domain.Task, error) {
+	return t.repo.DeleteTagByID(ctx, cmd)
+}
+
+// QueryTasks search tasks by title
+func (t *Service) QueryTasks(ctx context.Context, cmd QueryCommand) ([]domain.Task, error) {
+	return t.repo.QueryTasks(ctx, cmd)
+}

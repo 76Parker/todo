@@ -47,9 +47,12 @@ type DtoValidator interface {
 
 // TaskService create Task and check domain rules
 type TaskService interface {
-	Create(ctx context.Context, cmd task.CreateCommand) (domain.Task, error)
+	Create(ctx context.Context, createCmd task.CreateCommand) (domain.Task, error)
 	ReadByID(ctx context.Context, id int64) (domain.Task, error)
-	UpdateByID(ctx context.Context, cmd task.UpdateCommand) (domain.Task, error)
+	UpdateByID(ctx context.Context, updateCmd task.UpdateCommand) (domain.Task, error)
+	AddTagByID(ctx context.Context, addTagCmd task.TagCommand) (domain.Task, error)
+	DeleteTagByID(ctx context.Context, deleteTagCmd task.TagCommand) (domain.Task, error)
+	QueryTasks(ctx context.Context, queryCmd task.QueryCommand) ([]domain.Task, error)
 }
 
 // Create API handler for create Task (POST /v1/tasks)
@@ -202,4 +205,129 @@ func (t *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 		log.Warn("encode dto.ReadTaskDTO failed", "error", err)
 	}
 	log.Info("update task completed", "id", id)
+}
+
+// AddTag API handler for adding tags to a task (POST /tasks/{id}/tags)
+func (t *TaskHandler) AddTag(w http.ResponseWriter, r *http.Request) {
+	log := ctxlib.GetLoggerFromContext(r.Context())
+	id := r.PathValue("id")
+	requestID := ctxlib.RequestID(r.Context())
+	taskID, err := validator.ExtractAndValidateTaskID(id)
+	if err != nil {
+		log.Warn("add tags: ExtractAndValidateTaskID failed", "task_id", id, "err", err.Error())
+		sendJSONError(w, apierr.BadRequestError("invalid id", requestID))
+		return
+	}
+	var tag dto.Tag
+	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
+		log.Warn("add tags: decode tags failed", "error", err.Error(), "task_id", taskID)
+		sendJSONError(w, apierr.BadRequestError("invalid json body", requestID))
+		return
+	}
+	if err := t.validator.Validate(tag); err != nil {
+		log.Warn("validate tag failed", "error", err.Error())
+		sendJSONError(w, apierr.BadRequestError(err.Error(), requestID))
+		return
+	}
+	cmd := task.TagCommand{
+		ID:  taskID,
+		Tag: tag.Tag,
+	}
+	task, err := t.taskSvc.AddTagByID(r.Context(), cmd)
+	if err != nil {
+		if errors.Is(err, domain.ErrTaskNotFound) {
+			log.Warn("add tags: task_id not found", "err", err.Error(), "task_id", taskID)
+			w.Header().Set("X-Request-ID", requestID)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		log.Error("add tags failed", "error", err.Error(), "task_id", taskID)
+		w.Header().Set("X-Request-ID", requestID)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	readDTO := fromDomainTaskToReadTaskDTO(task)
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(readDTO); err != nil {
+		log.Warn("encode dto.ReadTaskDTO failed", "error", err)
+	}
+	log.Info("add tags completed", "task_id", taskID)
+}
+
+// DeleteTag API handler for deleting tags from a task (DELETE /tasks/{id}/tags)
+func (t *TaskHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
+	log := ctxlib.GetLoggerFromContext(r.Context())
+	requestID := ctxlib.RequestID(r.Context())
+	id := r.PathValue("id")
+	taskID, err := validator.ExtractAndValidateTaskID(id)
+	if err != nil {
+		log.Warn("ExtractAndValidateTaskID failed", "task_id", id, "err", err.Error())
+		sendJSONError(w, apierr.BadRequestError("invalid id", requestID))
+		return
+	}
+
+	var tag dto.Tag
+	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
+		log.Warn("decode tag failed", "error", err.Error())
+		sendJSONError(w, apierr.BadRequestError("invalid json body", requestID))
+		return
+	}
+
+	if err := t.validator.Validate(tag); err != nil {
+		log.Warn("validate tag failed", "error", err.Error())
+		sendJSONError(w, apierr.BadRequestError(err.Error(), requestID))
+		return
+	}
+	deleteCmd := task.TagCommand{
+		ID:  taskID,
+		Tag: tag.Tag,
+	}
+
+	task, err := t.taskSvc.DeleteTagByID(r.Context(), deleteCmd)
+	if err != nil {
+		if errors.Is(err, domain.ErrTagOrTaskNotFound) {
+			log.Warn("delete tags: tag or task not found", "err", err.Error(), "task_id", taskID)
+			sendJSONError(w, apierr.NotFoundError("tag or task not found", requestID))
+			return
+		}
+		log.Error("delete tags failed", "error", err.Error(), "task_id", taskID)
+		w.Header().Set("X-Request-ID", requestID)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	readDTO := fromDomainTaskToReadTaskDTO(task)
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(readDTO); err != nil {
+		log.Warn("delete tags: encode dto.ReadTaskDTO failed", "error", err, "task_id", taskID)
+	}
+	log.Info("delete tags completed", "task_id", taskID)
+}
+
+// QueryTasks API handler for searching tasks by filter. Supports only title (GET /tasks?title=)
+func (t *TaskHandler) QueryTasks(w http.ResponseWriter, r *http.Request) {
+	log := ctxlib.GetLoggerFromContext(r.Context())
+	requestID := ctxlib.RequestID(r.Context())
+	query := r.URL.Query().Get("title")
+	tasks, err := t.taskSvc.QueryTasks(r.Context(), task.QueryCommand{Title: query})
+	if err != nil {
+		log.Error("search tasks failed", "error", err.Error(), "query", query)
+		w.Header().Set("X-Request-ID", requestID)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	readDTOs := make([]dto.ReadTask, 0, len(tasks))
+	for _, task := range tasks {
+		readDTOs = append(readDTOs, fromDomainTaskToReadTaskDTO(task))
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(readDTOs); err != nil {
+		log.Warn("search tasks: encode dto.ReadTaskDTO failed", "error", err, "query", query)
+	}
+	log.Info("search tasks completed", "query", query)
 }

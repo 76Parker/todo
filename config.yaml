@@ -10,9 +10,8 @@ logger:
     local_time: true # использовать ли локальное время хоста для названия старых log-файлов на котором работает процесс
     compress: false # использовать ли gzip-компрессию для старых log-файлов
 
-
 postgres:
-  host: "192.168.100.2"
+  host: localhost
   port: 5432
   database: postgres
   ssl: disable

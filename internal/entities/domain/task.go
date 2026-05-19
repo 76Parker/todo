@@ -23,6 +23,9 @@ var (
 
 	// ErrNoChanges error for no changes in task update
 	ErrNoChanges = errors.New("no changes in task update")
+
+	// ErrTagOrTaskNotFound error for situation where tag or task not found in storage
+	ErrTagOrTaskNotFound = errors.New("tag or task not found")
 )
 
 // NewStatus construct Status and check domain rules (check valid statuses for Task)

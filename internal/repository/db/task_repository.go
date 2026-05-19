@@ -150,3 +150,88 @@ func buildUpdateQuery(qb squirrel.UpdateBuilder, updateCmd task.UpdateCommand) (
 	}
 	return qb.Suffix("RETURNING id, title, status, description, category, tags, created_at"), hasChanges
 }
+
+// AddTagByID adds a tag to a task by task ID
+func (t *TaskRepository) AddTagByID(ctx context.Context, cmd task.TagCommand) (domain.Task, error) {
+
+	sqlQuery := `UPDATE todo.tasks SET tags = array_append(tags, $1) WHERE id = $2 RETURNING id, title, status, description, category, tags, created_at`
+	rows, err := t.pool.Query(ctx, sqlQuery, cmd.Tag, cmd.ID)
+	if err != nil {
+		return domain.Task{}, err
+	}
+	task, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[table.Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Task{}, domain.ErrTaskNotFound
+		}
+		return domain.Task{}, err
+	}
+	domainTask := domain.ReconstituteTask(
+		task.ID,
+		task.Title,
+		task.Description.String,
+		task.Status,
+		task.Category.String,
+		pgTextArrayToStrings(task.Tags),
+		task.CreatedAt)
+	return domainTask, nil
+}
+
+// DeleteTagByID deletes tags from a task by task ID
+func (t *TaskRepository) DeleteTagByID(ctx context.Context, cmd task.TagCommand) (domain.Task, error) {
+	sqlQuery := `UPDATE todo.tasks SET tags = array_remove(tags, $1)
+				WHERE id = $2 AND $1 = ANY(tags)
+				RETURNING id, title, status, description, category, tags, created_at`
+	rows, err := t.pool.Query(ctx, sqlQuery, cmd.Tag, cmd.ID)
+	if err != nil {
+		return domain.Task{}, err
+	}
+	task, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[table.Task])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.Task{}, domain.ErrTagOrTaskNotFound
+		}
+		return domain.Task{}, err
+	}
+	domainTask := domain.ReconstituteTask(
+		task.ID,
+		task.Title,
+		task.Description.String,
+		task.Status,
+		task.Category.String,
+		pgTextArrayToStrings(task.Tags),
+		task.CreatedAt)
+	return domainTask, nil
+}
+
+// QueryTasks returns a list of tasks that match the given query command.
+func (t *TaskRepository) QueryTasks(ctx context.Context, cmd task.QueryCommand) ([]domain.Task, error) {
+	sqlQuery := `SELECT id, title, status, description, category, tags, created_at
+				FROM todo.tasks`
+
+	args := make([]any, 0)
+	if cmd.Title != "" {
+		sqlQuery += ` WHERE title ILIKE $1`
+		args = append(args, "%"+cmd.Title+"%")
+	}
+	rows, err := t.pool.Query(ctx, sqlQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	tasks, err := pgx.CollectRows(rows, pgx.RowToStructByName[table.Task])
+	if err != nil {
+		return nil, err
+	}
+	domainTasks := make([]domain.Task, 0, len(tasks))
+	for _, task := range tasks {
+		domainTasks = append(domainTasks, domain.ReconstituteTask(
+			task.ID,
+			task.Title,
+			task.Description.String,
+			task.Status,
+			task.Category.String,
+			pgTextArrayToStrings(task.Tags),
+			task.CreatedAt))
+	}
+	return domainTasks, nil
+}

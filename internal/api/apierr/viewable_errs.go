@@ -6,6 +6,7 @@ import "net/http"
 var (
 	codeBadRequest      = "bad_request"
 	codeValidationError = "validation_error"
+	codeNotFound        = "resource_not_found"
 )
 
 // Error it's a struct indented for viewable API error
@@ -36,6 +37,16 @@ func ValidationFailedError(message, requestID string) Error {
 		Status:    http.StatusBadRequest,
 		RequestID: requestID,
 		Code:      codeValidationError,
+		Message:   message,
+	}
+}
+
+// NotFoundError it's a constructor for generic http.StatusNotFound API errors (ex.: resource not found)
+func NotFoundError(message, requestID string) Error {
+	return Error{
+		Status:    http.StatusNotFound,
+		RequestID: requestID,
+		Code:      codeNotFound,
 		Message:   message,
 	}
 }

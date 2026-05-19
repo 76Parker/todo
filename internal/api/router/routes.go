@@ -31,7 +31,16 @@ func registerV1TaskRoutes(mux *http.ServeMux, taskHandler *api.TaskHandler, log 
 	createHandler := http.HandlerFunc(taskHandler.Create)
 	readHandler := http.HandlerFunc(taskHandler.Read)
 	updateHandler := http.HandlerFunc(taskHandler.Update)
+
+	addTagHandler := http.HandlerFunc(taskHandler.AddTag)
+	deleteTagHandler := http.HandlerFunc(taskHandler.DeleteTag)
+	queryHandler := http.HandlerFunc(taskHandler.QueryTasks)
+
 	mux.Handle("POST "+apiV1+"/tasks", middleware.Recover(requestID(createHandler)))
 	mux.Handle("GET "+apiV1+"/tasks/{id}", middleware.Recover(requestID(readHandler)))
+	mux.Handle("GET "+apiV1+"/tasks", middleware.Recover(requestID(queryHandler)))
 	mux.Handle("PATCH "+apiV1+"/tasks/{id}", middleware.Recover(requestID(updateHandler)))
+
+	mux.Handle("POST "+apiV1+"/tasks/{id}/tags", middleware.Recover(requestID(addTagHandler)))
+	mux.Handle("DELETE "+apiV1+"/tasks/{id}/tags", middleware.Recover(requestID(deleteTagHandler)))
 }

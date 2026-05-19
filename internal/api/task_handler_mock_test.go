@@ -81,19 +81,64 @@ func (m *MockTaskService) EXPECT() *MockTaskServiceMockRecorder {
 	return m.recorder
 }
 
-// Create mocks base method.
-func (m *MockTaskService) Create(ctx context.Context, cmd task.CreateCommand) (domain.Task, error) {
+// AddTagByID mocks base method.
+func (m *MockTaskService) AddTagByID(ctx context.Context, addTagCmd task.TagCommand) (domain.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, cmd)
+	ret := m.ctrl.Call(m, "AddTagByID", ctx, addTagCmd)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddTagByID indicates an expected call of AddTagByID.
+func (mr *MockTaskServiceMockRecorder) AddTagByID(ctx, addTagCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTagByID", reflect.TypeOf((*MockTaskService)(nil).AddTagByID), ctx, addTagCmd)
+}
+
+// Create mocks base method.
+func (m *MockTaskService) Create(ctx context.Context, createCmd task.CreateCommand) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, createCmd)
 	ret0, _ := ret[0].(domain.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockTaskServiceMockRecorder) Create(ctx, cmd any) *gomock.Call {
+func (mr *MockTaskServiceMockRecorder) Create(ctx, createCmd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTaskService)(nil).Create), ctx, cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTaskService)(nil).Create), ctx, createCmd)
+}
+
+// DeleteTagByID mocks base method.
+func (m *MockTaskService) DeleteTagByID(ctx context.Context, deleteTagCmd task.TagCommand) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTagByID", ctx, deleteTagCmd)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteTagByID indicates an expected call of DeleteTagByID.
+func (mr *MockTaskServiceMockRecorder) DeleteTagByID(ctx, deleteTagCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTagByID", reflect.TypeOf((*MockTaskService)(nil).DeleteTagByID), ctx, deleteTagCmd)
+}
+
+// QueryTasks mocks base method.
+func (m *MockTaskService) QueryTasks(ctx context.Context, queryCmd task.QueryCommand) ([]domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryTasks", ctx, queryCmd)
+	ret0, _ := ret[0].([]domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryTasks indicates an expected call of QueryTasks.
+func (mr *MockTaskServiceMockRecorder) QueryTasks(ctx, queryCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryTasks", reflect.TypeOf((*MockTaskService)(nil).QueryTasks), ctx, queryCmd)
 }
 
 // ReadByID mocks base method.
@@ -112,16 +157,16 @@ func (mr *MockTaskServiceMockRecorder) ReadByID(ctx, id any) *gomock.Call {
 }
 
 // UpdateByID mocks base method.
-func (m *MockTaskService) UpdateByID(ctx context.Context, cmd task.UpdateCommand) (domain.Task, error) {
+func (m *MockTaskService) UpdateByID(ctx context.Context, updateCmd task.UpdateCommand) (domain.Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateByID", ctx, cmd)
+	ret := m.ctrl.Call(m, "UpdateByID", ctx, updateCmd)
 	ret0, _ := ret[0].(domain.Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateByID indicates an expected call of UpdateByID.
-func (mr *MockTaskServiceMockRecorder) UpdateByID(ctx, cmd any) *gomock.Call {
+func (mr *MockTaskServiceMockRecorder) UpdateByID(ctx, updateCmd any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateByID", reflect.TypeOf((*MockTaskService)(nil).UpdateByID), ctx, cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateByID", reflect.TypeOf((*MockTaskService)(nil).UpdateByID), ctx, updateCmd)
 }

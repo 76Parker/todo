@@ -126,3 +126,248 @@ func TestService_ReadByID(t *testing.T) {
 		})
 	}
 }
+
+func TestService_UpdateByID(t *testing.T) {
+	tests := []struct {
+		name         string
+		cmd          UpdateCommand
+		wantRepoCall bool
+		wantErr      bool
+		repoErr      error
+		repoReturn   domain.Task
+	}{
+		{
+			name: "ValidUpdateCommand_1",
+			cmd: UpdateCommand{
+				ID:    1,
+				Title: stringPtr("updated title"),
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn:   testReconstituteTaskByID(1),
+		},
+		{
+			name: "ValidUpdateCommand_2",
+			cmd: UpdateCommand{
+				ID:     2,
+				Status: stringPtr("done"),
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn:   testReconstituteTaskByID(2),
+		},
+		{
+			name: "InvalidUpdateCommand_1",
+			cmd: UpdateCommand{
+				ID:     3,
+				Status: stringPtr("invalid_status"),
+			},
+			wantRepoCall: false,
+			wantErr:      true,
+		},
+		{
+			name: "RepositoryError_1",
+			cmd: UpdateCommand{
+				ID:          4,
+				Description: stringPtr("updated description"),
+			},
+			wantRepoCall: true,
+			wantErr:      true,
+			repoErr:      domain.ErrTaskNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := NewMockRepository(ctrl)
+			if tt.wantRepoCall {
+				mockRepo.EXPECT().UpdateByID(gomock.Any(), tt.cmd).Return(tt.repoReturn, tt.repoErr)
+			}
+
+			service := NewService(mockRepo)
+			gotTask, err := service.UpdateByID(context.Background(), tt.cmd)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.repoReturn.ID(), gotTask.ID())
+		})
+	}
+}
+
+func TestService_AddTagByID(t *testing.T) {
+	tests := []struct {
+		name         string
+		cmd          TagCommand
+		wantRepoCall bool
+		wantErr      bool
+		repoErr      error
+		repoReturn   domain.Task
+	}{
+		{
+			name: "ValidAddTagCommand_1",
+			cmd: TagCommand{
+				ID:  1,
+				Tag: "urgent",
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn:   testReconstituteTaskByID(1),
+		},
+		{
+			name: "RepositoryError_1",
+			cmd: TagCommand{
+				ID:  2,
+				Tag: "backend",
+			},
+			wantRepoCall: true,
+			wantErr:      true,
+			repoErr:      domain.ErrTaskNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := NewMockRepository(ctrl)
+			if tt.wantRepoCall {
+				mockRepo.EXPECT().AddTagByID(gomock.Any(), tt.cmd).Return(tt.repoReturn, tt.repoErr)
+			}
+
+			service := NewService(mockRepo)
+			gotTask, err := service.AddTagByID(context.Background(), tt.cmd)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.repoReturn.ID(), gotTask.ID())
+		})
+	}
+}
+
+func TestService_DeleteTagByID(t *testing.T) {
+	tests := []struct {
+		name         string
+		cmd          TagCommand
+		wantRepoCall bool
+		wantErr      bool
+		repoErr      error
+		repoReturn   domain.Task
+	}{
+		{
+			name: "ValidDeleteTagCommand_1",
+			cmd: TagCommand{
+				ID:  1,
+				Tag: "urgent",
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn:   testReconstituteTaskByID(1),
+		},
+		{
+			name: "RepositoryError_1",
+			cmd: TagCommand{
+				ID:  2,
+				Tag: "missing-tag",
+			},
+			wantRepoCall: true,
+			wantErr:      true,
+			repoErr:      domain.ErrTagOrTaskNotFound,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := NewMockRepository(ctrl)
+			if tt.wantRepoCall {
+				mockRepo.EXPECT().DeleteTagByID(gomock.Any(), tt.cmd).Return(tt.repoReturn, tt.repoErr)
+			}
+
+			service := NewService(mockRepo)
+			gotTask, err := service.DeleteTagByID(context.Background(), tt.cmd)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.repoReturn.ID(), gotTask.ID())
+		})
+	}
+}
+
+func TestService_QueryTasks(t *testing.T) {
+	tests := []struct {
+		name         string
+		cmd          QueryCommand
+		wantRepoCall bool
+		wantErr      bool
+		repoErr      error
+		repoReturn   []domain.Task
+	}{
+		{
+			name: "ValidQueryCommand_1",
+			cmd: QueryCommand{
+				Title: "test",
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn: []domain.Task{
+				testReconstituteTaskByID(1),
+				testReconstituteTaskByID(2),
+			},
+		},
+		{
+			name: "ValidQueryCommand_2",
+			cmd: QueryCommand{
+				Title: "",
+			},
+			wantRepoCall: true,
+			wantErr:      false,
+			repoReturn:   []domain.Task{},
+		},
+		{
+			name: "RepositoryError_1",
+			cmd: QueryCommand{
+				Title: "backend",
+			},
+			wantRepoCall: true,
+			wantErr:      true,
+			repoErr:      errors.New("query failed"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockRepo := NewMockRepository(ctrl)
+			if tt.wantRepoCall {
+				mockRepo.EXPECT().QueryTasks(gomock.Any(), tt.cmd).Return(tt.repoReturn, tt.repoErr)
+			}
+
+			service := NewService(mockRepo)
+			gotTasks, err := service.QueryTasks(context.Background(), tt.cmd)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.repoReturn, gotTasks)
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

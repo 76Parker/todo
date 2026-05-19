@@ -41,6 +41,21 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddTagByID mocks base method.
+func (m *MockRepository) AddTagByID(ctx context.Context, addCmd TagCommand) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddTagByID", ctx, addCmd)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddTagByID indicates an expected call of AddTagByID.
+func (mr *MockRepositoryMockRecorder) AddTagByID(ctx, addCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTagByID", reflect.TypeOf((*MockRepository)(nil).AddTagByID), ctx, addCmd)
+}
+
 // Create mocks base method.
 func (m *MockRepository) Create(ctx context.Context, task domain.Task) (domain.Task, error) {
 	m.ctrl.T.Helper()
@@ -54,6 +69,36 @@ func (m *MockRepository) Create(ctx context.Context, task domain.Task) (domain.T
 func (mr *MockRepositoryMockRecorder) Create(ctx, task any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), ctx, task)
+}
+
+// DeleteTagByID mocks base method.
+func (m *MockRepository) DeleteTagByID(ctx context.Context, deleteCmd TagCommand) (domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTagByID", ctx, deleteCmd)
+	ret0, _ := ret[0].(domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteTagByID indicates an expected call of DeleteTagByID.
+func (mr *MockRepositoryMockRecorder) DeleteTagByID(ctx, deleteCmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTagByID", reflect.TypeOf((*MockRepository)(nil).DeleteTagByID), ctx, deleteCmd)
+}
+
+// QueryTasks mocks base method.
+func (m *MockRepository) QueryTasks(ctx context.Context, cmd QueryCommand) ([]domain.Task, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryTasks", ctx, cmd)
+	ret0, _ := ret[0].([]domain.Task)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryTasks indicates an expected call of QueryTasks.
+func (mr *MockRepositoryMockRecorder) QueryTasks(ctx, cmd any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryTasks", reflect.TypeOf((*MockRepository)(nil).QueryTasks), ctx, cmd)
 }
 
 // ReadByID mocks base method.

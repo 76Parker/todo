@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Todo API
-  version: 1.2.0
-  description: API для создания, чтения и обновления задач.
+  version: 1.5.0
+  description: API для создания, чтения, поиска, обновления задач и управления тегом задачи.
 servers:
   - url: /
 tags:
@@ -10,6 +10,67 @@ tags:
     description: Операции с задачами
 paths:
   /v1/tasks:
+    get:
+      tags:
+        - Tasks
+      summary: Найти задачи
+      description: Возвращает список задач. Сейчас поддерживается фильтр только по `title`.
+      operationId: queryTasks
+      parameters:
+        - in: query
+          name: title
+          required: false
+          description: Фильтр по заголовку задачи
+          schema:
+            type: string
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        '200':
+          description: Список задач
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReadTask'
+              examples:
+                found:
+                  value:
+                    - id: 42
+                      title: Buy milk
+                      status: open
+                      description: ""
+                      category: ""
+                      tags: []
+                      created_at: "2026-05-20T12:00:00Z"
+                    - id: 43
+                      title: Buy bread
+                      status: done
+                      description: ""
+                      category: home
+                      tags:
+                        - grocery
+                      created_at: "2026-05-20T13:00:00Z"
+                empty:
+                  value: []
+        '500':
+          description: Внутренняя ошибка сервера
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса может присутствовать в ответе
+              schema:
+                type: string
     post:
       tags:
         - Tasks
@@ -184,6 +245,17 @@ paths:
               description: Идентификатор запроса
               schema:
                 type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                taskNotFound:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 404
+                    code: resource_not_found
+                    message: task not found
         '500':
           description: Внутренняя ошибка сервера
           headers:
@@ -296,6 +368,222 @@ paths:
               description: Идентификатор запроса
               schema:
                 type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                taskNotFound:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 404
+                    code: resource_not_found
+                    message: task not found
+        '500':
+          description: Внутренняя ошибка сервера
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса может присутствовать в ответе
+              schema:
+                type: string
+  /v1/tasks/{id}/tags:
+    post:
+      tags:
+        - Tasks
+      summary: Добавить тег к задаче
+      description: Добавляет один тег к задаче по её идентификатору.
+      operationId: addTaskTag
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Идентификатор задачи
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            examples:
+              add:
+                value:
+                  tag: urgent
+      responses:
+        '200':
+          description: Тег добавлен
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadTask'
+        '400':
+          description: Некорректный идентификатор, JSON или тег
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidID:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid id
+                invalidJson:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid json body
+                invalidTag:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: tag is required
+        '404':
+          description: Задача не найдена
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                taskNotFound:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 404
+                    code: resource_not_found
+                    message: task not found
+        '500':
+          description: Внутренняя ошибка сервера
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса может присутствовать в ответе
+              schema:
+                type: string
+    delete:
+      tags:
+        - Tasks
+      summary: Удалить тег у задачи
+      description: Удаляет один тег у задачи по её идентификатору.
+      operationId: deleteTaskTag
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Идентификатор задачи
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Пользовательский request ID. Если не передан, сервер сгенерирует его сам.
+          schema:
+            type: string
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            examples:
+              delete:
+                value:
+                  tag: urgent
+      responses:
+        '200':
+          description: Тег удалён
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadTask'
+        '400':
+          description: Некорректный идентификатор, JSON или тег
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalidID:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid id
+                invalidJson:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: invalid json body
+                invalidTag:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 400
+                    code: bad_request
+                    message: tag is required
+        '404':
+          description: Задача или тег не найдены
+          headers:
+            X-Request-ID:
+              description: Идентификатор запроса
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                taskNotFound:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 404
+                    code: resource_not_found
+                    message: task not found
+                tagNotFound:
+                  value:
+                    request_id: clx7f4b2f0000qtr8gk1d0abc
+                    status_code: 404
+                    code: resource_not_found
+                    message: tag or task not found
         '500':
           description: Внутренняя ошибка сервера
           headers:
@@ -359,14 +647,22 @@ components:
           $ref: '#/components/schemas/TaskStatus'
         description:
           type: string
-          minLength: 1
           maxLength: 500
           description: Новое описание задачи
         category:
           type: string
-          minLength: 1
           maxLength: 500
           description: Новая категория задачи
+    Tag:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          type: string
+          minLength: 1
+          maxLength: 30
+          description: Тег для добавления или удаления
     ReadTask:
       type: object
       required:
@@ -414,5 +710,6 @@ components:
           enum:
             - bad_request
             - validation_error
+            - resource_not_found
         message:
           type: string

@@ -30,6 +30,16 @@ type UpdateTask struct {
 	Category    *string `json:"category,omitempty" validate:"omitnil,max=500"`
 }
 
+// Tag dto for manipulate tags (add and delete)
+type Tag struct {
+	Tag string `json:"tag" validate:"required,min=1,max=30,notblank"`
+}
+
+// Type method for implement DTO interface
+func (v Tag) Type() string {
+	return "Tags"
+}
+
 // Type method for implement DTO interface
 func (v CreateTask) Type() string {
 	return "CreateTask"
