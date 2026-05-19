@@ -40,7 +40,7 @@ paths:
         Если фильтр не передан, поведение определяется текущей реализацией сервиса поиска.
       operationId: queryTasks
       parameters:
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/XRequestID"
         - in: query
           name: title
           required: false
@@ -51,17 +51,17 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Список задач
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ReadTask'
+                  $ref: "#/components/schemas/ReadTask"
               examples:
                 found:
                   summary: Найдено несколько задач
@@ -84,8 +84,8 @@ paths:
                 empty:
                   summary: Ничего не найдено
                   value: []
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags:
         - Tasks
@@ -100,13 +100,13 @@ paths:
         - неизвестные поля JSON запрещены
       operationId: createTask
       parameters:
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/XRequestID"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTask'
+              $ref: "#/components/schemas/CreateTask"
             examples:
               minimal:
                 summary: Минимальный запрос
@@ -132,15 +132,15 @@ paths:
                     - planning
                     - sprint
       responses:
-        '201':
+        "201":
           description: Задача создана
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadTask'
+                $ref: "#/components/schemas/ReadTask"
               examples:
                 created:
                   summary: Созданная задача
@@ -152,15 +152,15 @@ paths:
                     category: ""
                     tags: []
                     created_at: "2026-05-20T12:00:00Z"
-        '400':
+        "400":
           description: Некорректный JSON, ошибка валидации или невалидный статус
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidJson:
                   summary: Неизвестное поле или сломанный JSON
@@ -183,8 +183,8 @@ paths:
                     status_code: 400
                     code: bad_request
                     message: invalid status
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /v1/tasks/{id}:
     get:
       tags:
@@ -193,18 +193,18 @@ paths:
       description: Возвращает задачу по её идентификатору.
       operationId: readTask
       parameters:
-        - $ref: '#/components/parameters/TaskID'
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/TaskID"
+        - $ref: "#/components/parameters/XRequestID"
       responses:
-        '200':
+        "200":
           description: Задача найдена
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadTask'
+                $ref: "#/components/schemas/ReadTask"
               examples:
                 found:
                   value:
@@ -215,15 +215,15 @@ paths:
                     category: ""
                     tags: []
                     created_at: "2026-05-20T12:00:00Z"
-        '400':
+        "400":
           description: Некорректный идентификатор задачи
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidTaskID:
                   value:
@@ -237,15 +237,15 @@ paths:
                     status_code: 400
                     code: validation_error
                     message: task_id is empty
-        '404':
+        "404":
           description: Задача не найдена
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 taskNotFound:
                   value:
@@ -253,8 +253,8 @@ paths:
                     status_code: 404
                     code: resource_not_found
                     message: task not found
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     patch:
       tags:
         - Tasks
@@ -269,14 +269,14 @@ paths:
         - `description` и `category` можно очистить пустой строкой `""`
       operationId: updateTask
       parameters:
-        - $ref: '#/components/parameters/TaskID'
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/TaskID"
+        - $ref: "#/components/parameters/XRequestID"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateTask'
+              $ref: "#/components/schemas/UpdateTask"
             examples:
               title:
                 summary: Обновление заголовка
@@ -299,15 +299,15 @@ paths:
                   description: Finalize checklist
                   category: work
       responses:
-        '200':
+        "200":
           description: Задача обновлена
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadTask'
+                $ref: "#/components/schemas/ReadTask"
               examples:
                 updated:
                   value:
@@ -318,15 +318,15 @@ paths:
                     category: work
                     tags: []
                     created_at: "2026-05-20T12:00:00Z"
-        '400':
+        "400":
           description: Некорректный JSON, ошибка валидации, невалидный статус или отсутствие изменений
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidJson:
                   value:
@@ -352,15 +352,15 @@ paths:
                     status_code: 400
                     code: bad_request
                     message: no changes in update task request
-        '404':
+        "404":
           description: Задача не найдена
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 taskNotFound:
                   value:
@@ -368,8 +368,8 @@ paths:
                     status_code: 404
                     code: resource_not_found
                     message: task not found
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /v1/tasks/{id}/tags:
     post:
       tags:
@@ -384,28 +384,28 @@ paths:
         - пустая строка и строка из одних пробелов невалидны
       operationId: addTaskTag
       parameters:
-        - $ref: '#/components/parameters/TaskID'
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/TaskID"
+        - $ref: "#/components/parameters/XRequestID"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tag'
+              $ref: "#/components/schemas/Tag"
             examples:
               add:
                 value:
                   tag: urgent
       responses:
-        '200':
+        "200":
           description: Тег добавлен
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadTask'
+                $ref: "#/components/schemas/ReadTask"
               examples:
                 updated:
                   value:
@@ -417,15 +417,15 @@ paths:
                     tags:
                       - urgent
                     created_at: "2026-05-20T12:00:00Z"
-        '400':
+        "400":
           description: Некорректный идентификатор, JSON или сам тег
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidID:
                   value:
@@ -445,15 +445,15 @@ paths:
                     status_code: 400
                     code: bad_request
                     message: tag is required
-        '404':
+        "404":
           description: Задача не найдена
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 taskNotFound:
                   value:
@@ -461,8 +461,8 @@ paths:
                     status_code: 404
                     code: resource_not_found
                     message: task not found
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Tasks
@@ -476,28 +476,28 @@ paths:
         - если сервис не смог найти ни задачу, ни тег, он сейчас возвращает единый ответ `tag or task not found`
       operationId: deleteTaskTag
       parameters:
-        - $ref: '#/components/parameters/TaskID'
-        - $ref: '#/components/parameters/XRequestID'
+        - $ref: "#/components/parameters/TaskID"
+        - $ref: "#/components/parameters/XRequestID"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Tag'
+              $ref: "#/components/schemas/Tag"
             examples:
               delete:
                 value:
                   tag: urgent
       responses:
-        '200':
+        "200":
           description: Тег удалён
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReadTask'
+                $ref: "#/components/schemas/ReadTask"
               examples:
                 updated:
                   value:
@@ -508,15 +508,15 @@ paths:
                     category: ""
                     tags: []
                     created_at: "2026-05-20T12:00:00Z"
-        '400':
+        "400":
           description: Некорректный идентификатор, JSON или сам тег
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 invalidID:
                   value:
@@ -536,15 +536,15 @@ paths:
                     status_code: 400
                     code: bad_request
                     message: tag is required
-        '404':
+        "404":
           description: Задача или тег не найдены
           headers:
             X-Request-ID:
-              $ref: '#/components/headers/XRequestID'
+              $ref: "#/components/headers/XRequestID"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 taskOrTagNotFound:
                   value:
@@ -552,8 +552,8 @@ paths:
                     status_code: 404
                     code: resource_not_found
                     message: tag or task not found
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   parameters:
     XRequestID:
@@ -587,7 +587,7 @@ components:
       description: Внутренняя ошибка сервера
       headers:
         X-Request-ID:
-          $ref: '#/components/headers/XRequestID'
+          $ref: "#/components/headers/XRequestID"
   schemas:
     TaskStatus:
       type: string
@@ -617,7 +617,7 @@ components:
             Обязательное поле. Пустая строка и строка из одних пробелов невалидны.
         status:
           allOf:
-            - $ref: '#/components/schemas/TaskStatus'
+            - $ref: "#/components/schemas/TaskStatus"
           description: |
             Статус новой задачи.
 
@@ -691,7 +691,7 @@ components:
             Пустая строка и строка из одних пробелов невалидны.
         status:
           allOf:
-            - $ref: '#/components/schemas/TaskStatus'
+            - $ref: "#/components/schemas/TaskStatus"
           nullable: true
           description: |
             Новый статус задачи.
@@ -751,7 +751,7 @@ components:
           description: Заголовок задачи
         status:
           allOf:
-            - $ref: '#/components/schemas/TaskStatus'
+            - $ref: "#/components/schemas/TaskStatus"
           description: Текущий статус задачи
         description:
           type: string
