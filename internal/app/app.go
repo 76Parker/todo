@@ -19,6 +19,7 @@ import (
 	"github.com/76Parker/golib/loglib"
 	"github.com/76Parker/golib/pglib"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/cors"
 )
 
 // App build app and run app
@@ -55,8 +56,9 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	}
 
 	serverHandler := initRouter(handlers, log)
+	serverHandlerWithDefaultCORS := cors.Default().Handler(serverHandler)
 
-	server := httplib.NewHTTPServer(ctx, cfg.HTTP, serverHandler)
+	server := httplib.NewHTTPServer(ctx, cfg.HTTP, serverHandlerWithDefaultCORS)
 
 	return &App{
 		s:         server,
