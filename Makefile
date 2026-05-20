@@ -1,13 +1,11 @@
 APP_NAME=todo
 MAIN=./cmd
 
+.PHONY: test
 
 coverage:
 	go test ./... -coverprofile=coverage.out
 	go tool cover -html=coverage.out
-
-
-.PHONY: test
 
 run:
 	golangci-lint run
@@ -19,7 +17,6 @@ test:
 mocks:
 	mockgen -source=internal/api/task_handler.go -destination=internal/api/task_handler_mock_test.go -package api
 	mockgen -source=internal/usecase/task/repository.go -destination=internal/usecase/task/repository_mock_test.go -package task
-
 
 linux-build:
 	GOOS=linux GOARCH=amd64 go build -o $(APP_NAME) $(MAIN)
