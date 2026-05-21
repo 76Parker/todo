@@ -28,6 +28,7 @@ import (
 type App struct {
 	s         *http.Server
 	l         *loglib.Slog
+	dbConn    *pgxpool.Pool
 	closeOnce sync.Once
 }
 
@@ -65,6 +66,7 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	return &App{
 		s:         server,
 		l:         log,
+		dbConn: dbPool,
 		closeOnce: sync.Once{},
 	}, nil
 }
@@ -83,10 +85,14 @@ func (a *App) Start() error {
 // Shutdown implement graceful shutdown for app
 func (a *App) Shutdown(ctx context.Context) error {
 	a.l.Info("Shutting down HTTP server...")
+	return a.s.Shutdown(ctx)
+}
+
+func (a *App) Close() {
 	a.closeOnce.Do(func() {
 		_ = a.l.Close()
+		a.dbConn.Close()
 	})
-	return a.s.Shutdown(ctx)
 }
 
 func initLogger(cfg loglib.SlogConfig) (*loglib.Slog, error) {

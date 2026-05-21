@@ -33,7 +33,7 @@ func NewStatus(value string) (Status, error) {
 	v := strings.TrimSpace(strings.ToLower(value))
 	switch Status(v) {
 	case statusOpen, statusClosed, statusInProgress, statusDone:
-		return Status(value), nil
+		return Status(v), nil
 	default:
 		return "", ErrInvalidStatus
 	}

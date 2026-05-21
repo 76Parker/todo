@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	maxBodySize = datasize.MB * 5
+	maxBodySize = datasize.MB * 1
 )
 
 func sendJSONError(w http.ResponseWriter, err apierr.Error) {
@@ -157,7 +157,14 @@ func (t *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var updateDto dto.UpdateTask
-	if err := json.NewDecoder(r.Body).Decode(&updateDto); err != nil {
+
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBodySize))
+	defer func() {
+		_ = r.Body.Close()
+	}()
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&updateDto); err != nil {
 		log.Warn("decode dto.UpdateTask failed", "error", err, "id", id)
 		sendJSONError(w, apierr.ValidationFailedError(err.Error(), requestID))
 		return
@@ -220,7 +227,14 @@ func (t *TaskHandler) AddTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var tag dto.Tag
-	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBodySize))
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&tag); err != nil {
 		log.Warn("add tags: decode tags failed", "error", err.Error(), "task_id", taskID)
 		sendJSONError(w, apierr.BadRequestError("invalid json body", requestID))
 		return
@@ -270,7 +284,13 @@ func (t *TaskHandler) DeleteTag(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tag dto.Tag
-	if err := json.NewDecoder(r.Body).Decode(&tag); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBodySize))
+	defer func() {
+		_ = r.Body.Close()
+	}()
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&tag); err != nil {
 		log.Warn("decode tag failed", "error", err.Error())
 		sendJSONError(w, apierr.BadRequestError("invalid json body", requestID))
 		return

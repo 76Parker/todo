@@ -37,16 +37,22 @@ func NewValidator() (Validator, error) {
 
 // Validate validating Config
 func (v *PlaygroundValidator) Validate(cfg *Config) error {
+	var errs []error
 	if err := v.v.Struct(cfg); err != nil {
 		if ve, ok := errors.AsType[validator.ValidationErrors](err); ok {
 			for _, e := range ve {
 				if e.Tag() == allowedPortsTag {
 					f := e.Field()
 					v, _ := strconv.Atoi(e.Value().(string))
-					return AllowedPortsError{f, v}
+					errs = append(errs, AllowedPortsError{f, v})
+					continue
 				}
+				errs = append(errs, fmt.Errorf("config validation error: field: %s validation tag: %s",e.Field(), e.Tag()))
 			}
 		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 	return nil
 }
