@@ -88,7 +88,7 @@ func (t *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidStatus) {
 			log.Warn("invalid status", "error", err)
-			sendJSONError(w, apierr.BadRequestError("invalid status", requestID))
+			sendJSONError(w, apierr.BadRequestError(err.Error(), requestID))
 			return
 		}
 		log.Error("taskSvc.Create failed", "error", err)

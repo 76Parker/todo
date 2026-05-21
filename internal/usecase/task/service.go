@@ -36,9 +36,12 @@ func (t *Service) ReadByID(ctx context.Context, id int64) (domain.Task, error) {
 // UpdateByID handle UpdateCommand use case
 func (t *Service) UpdateByID(ctx context.Context, cmd UpdateCommand) (domain.Task, error) {
 	if cmd.Status != nil {
-		if _, err := domain.NewStatus(*cmd.Status); err != nil {
+		status, err := domain.NewStatus(*cmd.Status)
+		if err != nil {
 			return domain.Task{}, err
 		}
+		s := string(status)
+		cmd.Status = &s
 	}
 	return t.repo.UpdateByID(ctx, cmd)
 }
